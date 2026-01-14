@@ -1,4 +1,4 @@
-<!-- src/lib/components/cyphertap/views/receive-view.svelte -->
+<!-- src/lib/components/plebtap/views/receive-view.svelte -->
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';

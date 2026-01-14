@@ -1,21 +1,21 @@
-# CypherTap
+# PlebTap
 
 **Nostr, Lightning & Ecash in a Single Svelte Component**
 
-Stop reinventing the wheel for every Nostr app. CypherTap gives you a complete authentication and payment solution with both a ready-to-use UI component and a comprehensive programmatic API - drop it in your Svelte app and you're done.
+Stop reinventing the wheel for every Nostr app. PlebTap gives you a complete authentication and payment solution with both a ready-to-use UI component and a comprehensive programmatic API - drop it in your Svelte app and you're done.
 
 Follow me on [Nostr](https://njump.me/npub1strjxxh7fzhrvgkraew4fpt6ppu973sc3p9cm2mehl0naq22hars007wsf) to see me build this library and other stuff live on stream.
-[![NPM Version](https://img.shields.io/npm/v/cyphertap)](https://www.npmjs.com/package/cyphertap)
-[![License](https://img.shields.io/npm/l/cyphertap)](https://github.com/cypherflow/cyphertap/blob/main/LICENSE)
+[![NPM Version](https://img.shields.io/npm/v/plebtap)](https://www.npmjs.com/package/plebtap)
+[![License](https://img.shields.io/npm/l/plebtap)](https://github.com/cypherflow/plebtap/blob/main/LICENSE)
 
-> **⚠️ EXPERIMENTAL SOFTWARE**: CypherTap is in beta and experimental. Private keys from newly created accounts or nsec imports are currently stored **unencrypted** in browser localStorage. Use at your own risk and never store more sats than you're willing to lose. Only use new keypairs or import your nsec if you understand the security implications.
+> **⚠️ EXPERIMENTAL SOFTWARE**: PlebTap is in beta and experimental. Private keys from newly created accounts or nsec imports are currently stored **unencrypted** in browser localStorage. Use at your own risk and never store more sats than you're willing to lose. Only use new keypairs or import your nsec if you understand the security implications.
 
 
-## 🚀 [Live Demo](https://cypherflow.github.io/cyphertap/)  
+## 🚀 [Live Demo](https://cypherflow.github.io/plebtap/)  
 
 ## Overview
 
-CypherTap is a **drop-in Svelte component** that gives your application:
+PlebTap is a **drop-in Svelte component** that gives your application:
 
 - 🔐 **Nostr Authentication** - Multiple login methods (NIP-07 extensions, private keys, device linking)
 - ⚡ **Lightning Payments** - Send and receive Lightning payments via NIP-60 Cashu wallets
@@ -29,11 +29,11 @@ CypherTap is a **drop-in Svelte component** that gives your application:
 ### Installation
 
 ```bash
-npm install cyphertap
+npm install plebtap
 # or
-pnpm add cyphertap
+pnpm add plebtap
 # or
-yarn add cyphertap
+yarn add plebtap
 ```
 
 ### Basic Usage
@@ -44,10 +44,10 @@ Just drop the component into your app:
 
 ```svelte
 <script lang="ts">
-  import { Cyphertap } from 'cyphertap';
+  import { plebtap } from 'plebtap';
 </script>
 
-<Cyphertap />
+<Plebtap />
 ```
 
 That's it! The button handles everything - login, wallet management, sending/receiving payments.
@@ -58,25 +58,25 @@ For more control, use the programmatic API with Svelte 5 runes:
 
 ```svelte
 <script lang="ts">
-  import { Cyphertap, cyphertap } from 'cyphertap';
+  import { Plebtap, plebtap } from 'plebtap';
   
   async function sendPayment() {
     // Generate a Lightning invoice
-    const { bolt11 } = await cyphertap.createLightningInvoice(1000, 'Coffee');
+    const { bolt11 } = await plebtap.createLightningInvoice(1000, 'Coffee');
     
     // Or generate an ecash token
-    const { token } = await cyphertap.generateEcashToken(100, 'Tip');
+    const { token } = await plebtap.generateEcashToken(100, 'Tip');
     
     // Or publish a Nostr note
-    await cyphertap.publishTextNote('Hello Nostr!');
+    await plebtap.publishTextNote('Hello Nostr!');
   }
 </script>
 
-<Cyphertap />
+<Plebtap />
 
-{#if cyphertap.isLoggedIn}
-  <p>Balance: {cyphertap.balance} sats</p>
-  <p>User: {cyphertap.npub}</p>
+{#if plebtap.isLoggedIn}
+  <p>Balance: {plebtap.balance} sats</p>
+  <p>User: {plebtap.npub}</p>
   <button onclick={sendPayment}>Send Payment</button>
 {/if}
 ```
@@ -85,7 +85,7 @@ For more control, use the programmatic API with Svelte 5 runes:
 
 ### Authentication Methods
 
-CypherTap supports multiple ways for users to authenticate:
+PlebTap supports multiple ways for users to authenticate:
 
 - **🔑 Create New Account** - Generates a new Nostr keypair and stores it in the browser's localStorage. **⚠️ Note**: In the current beta version, keys are stored unencrypted. Future versions will implement encrypted storage. Only use new keypairs for testing or if you understand the security risks.
 - **📱 Link from Another Device** - Secure QR code + PIN based device linking using NIP-49 encryption
@@ -96,26 +96,26 @@ CypherTap supports multiple ways for users to authenticate:
 
 ```javascript
 // Create an invoice to receive sats
-const { bolt11 } = await cyphertap.createLightningInvoice(
+const { bolt11 } = await plebtap.createLightningInvoice(
   1000,  // amount in sats
   'Payment for services'  // description
 );
 
 // Pay a Lightning invoice
-const result = await cyphertap.sendLightningPayment(bolt11);
+const result = await plebtap.sendLightningPayment(bolt11);
 ```
 
 ### Ecash Operations
 
 ```javascript
 // Generate an ecash token to send
-const { token, mint } = await cyphertap.generateEcashToken(
+const { token, mint } = await plebtap.generateEcashToken(
   500,  // amount in sats
   'Here you go!'  // memo
 );
 
 // Receive an ecash token
-const result = await cyphertap.receiveEcashToken(token);
+const result = await plebtap.receiveEcashToken(token);
 console.log(`Received ${result.amount} sats`);
 ```
 
@@ -123,72 +123,72 @@ console.log(`Received ${result.amount} sats`);
 
 ```javascript
 // Publish a text note
-const event = await cyphertap.publishTextNote('Hello Nostr!');
+const event = await plebtap.publishTextNote('Hello Nostr!');
 
 // Publish any event
-const event = await cyphertap.publishEvent({
+const event = await plebtap.publishEvent({
   kind: 1,
   content: 'Custom event',
-  tags: [['t', 'cyphertap']]
+  tags: [['t', 'plebtap']]
 });
 
 // Sign an event without publishing
-const signed = await cyphertap.signEvent({
+const signed = await plebtap.signEvent({
   kind: 1,
   content: 'This will be signed but not published'
 });
 
 // Subscribe to events
-const unsubscribe = cyphertap.subscribe(
+const unsubscribe = plebtap.subscribe(
   { kinds: [1], authors: [userPubkey] },
   (event) => console.log('New event:', event)
 );
 
 // Encrypt/decrypt messages (NIP-04)
-const encrypted = await cyphertap.encrypt('Secret message', recipientPubkey);
-const decrypted = await cyphertap.decrypt(encrypted, senderPubkey);
+const encrypted = await plebtap.encrypt('Secret message', recipientPubkey);
+const decrypted = await plebtap.decrypt(encrypted, senderPubkey);
 ```
 
 ### User Information
 
 ```javascript
 // Get user's npub
-const npub = cyphertap.getUserNpub();
+const npub = plebtap.getUserNpub();
 
 // Get user's hex pubkey
-const hex = cyphertap.getUserHex();
+const hex = plebtap.getUserHex();
 
 // Check connection status
-const { connected, total } = cyphertap.getConnectionStatus();
+const { connected, total } = plebtap.getConnectionStatus();
 console.log(`${connected}/${total} relays connected`);
 ```
 
 ## Reactive State
 
-CypherTap provides reactive state using Svelte 5 runes that automatically updates your UI:
+PlebTap provides reactive state using Svelte 5 runes that automatically updates your UI:
 
 ```svelte
 <script lang="ts">
-  import { Cyphertap, cyphertap } from 'cyphertap';
+  import { Plebtap, plebtap } from 'plebtap';
   
   // Use $state and $derived for reactive state
   let userStatus = $derived({
-    isLoggedIn: cyphertap.isLoggedIn,
-    isReady: cyphertap.isReady,
-    balance: cyphertap.balance,
-    npub: cyphertap.npub
+    isLoggedIn: plebtap.isLoggedIn,
+    isReady: plebtap.isReady,
+    balance: plebtap.balance,
+    npub: plebtap.npub
   });
   
   // Or use $effect for side effects
   $effect(() => {
-    console.log('Balance changed:', cyphertap.balance);
+    console.log('Balance changed:', plebtap.balance);
   });
 </script>
 
-{#if cyphertap.isLoggedIn}
-  {#if cyphertap.isReady}
-    <p>Balance: {cyphertap.balance} sats</p>
-    <p>NPub: {cyphertap.npub}</p>
+{#if plebtap.isLoggedIn}
+  {#if plebtap.isReady}
+    <p>Balance: {plebtap.balance} sats</p>
+    <p>NPub: {plebtap.npub}</p>
   {:else}
     <p>Loading wallet...</p>
   {/if}
@@ -199,12 +199,12 @@ CypherTap provides reactive state using Svelte 5 runes that automatically update
 
 ### Reactive Properties
 
-The `cyphertap` API object exposes the following reactive properties:
+The `plebtap` API object exposes the following reactive properties:
 
-- `cyphertap.isLoggedIn` - `boolean` - User authentication status
-- `cyphertap.isReady` - `boolean` - Wallet initialization status
-- `cyphertap.balance` - `number` - Current balance in sats
-- `cyphertap.npub` - `string | null` - User's npub
+- `plebtap.isLoggedIn` - `boolean` - User authentication status
+- `plebtap.isReady` - `boolean` - Wallet initialization status
+- `plebtap.balance` - `number` - Current balance in sats
+- `plebtap.npub` - `string | null` - User's npub
 
 These values update automatically and trigger Svelte's reactivity system.
 
@@ -212,7 +212,7 @@ These values update automatically and trigger Svelte's reactivity system.
 
 ### Built-in Views
 
-The CypherTap button component includes:
+The PlebTap button component includes:
 
 - **Login Flow** - Multiple authentication methods with smooth UX
 - **Main Wallet** - Balance display, quick send/receive actions
@@ -232,7 +232,7 @@ The CypherTap button component includes:
 
 ### Default Mints
 
-By default, CypherTap uses `https://mint.cypherflow.ai`. Users can add additional mints through the settings interface. Mint selection view will be added to the onboarding process soon.
+By default, PlebTap uses `https://mint.cypherflow.ai`. Users can add additional mints through the settings interface. Mint selection view will be added to the onboarding process soon.
 
 ### Relay Configuration
 
@@ -240,7 +240,7 @@ Users can manage their relay list directly from the settings. The component publ
 
 ### Styling
 
-CypherTap uses Tailwind CSS and shadcn-svelte components. You can customize the appearance by:
+PlebTap uses Tailwind CSS and shadcn-svelte components. You can customize the appearance by:
 
 1. Using your own Tailwind theme
 2. Overriding CSS custom properties
@@ -248,7 +248,7 @@ CypherTap uses Tailwind CSS and shadcn-svelte components. You can customize the 
 
 ## NIP Support
 
-CypherTap implements several Nostr Improvement Proposals (NIPs):
+PlebTap implements several Nostr Improvement Proposals (NIPs):
 
 - **NIP-01**: Basic protocol
 - **NIP-04**: Encrypted Direct Messages
@@ -275,7 +275,7 @@ CypherTap implements several Nostr Improvement Proposals (NIPs):
 ### Secure Alternatives
 
 - 🔌 **Browser Extensions** (Recommended): Use NIP-07 compatible extensions like Alby or nos2x - private keys never leave the extension
-- 📱 **Device Linking**: Link from another device or app running Cyphertap with NIP-49 encrypted QR codes + PIN
+- 📱 **Device Linking**: Link from another device or app running Plebtap with NIP-49 encrypted QR codes + PIN
 
 ### Future Improvements
 
@@ -295,7 +295,7 @@ CypherTap implements several Nostr Improvement Proposals (NIPs):
 
 ## Browser Support
 
-CypherTap requires a modern browser with support for:
+PlebTap requires a modern browser with support for:
 
 - IndexedDB (for local caching)
 - Web Crypto API (for encryption)
@@ -306,10 +306,10 @@ CypherTap requires a modern browser with support for:
 ### Project Structure
 
 ```
-cyphertap/
+plebtap/
 ├── src/lib/
 │   ├── components/
-│   │   ├── cyphertap/          # Main component
+│   │   ├── plebtap/          # Main component
 │   │   │   ├── views/          # Different UI views
 │   │   │   ├── wallet/         # Wallet-specific components
 │   │   │   └── settings/       # Settings components
@@ -330,8 +330,8 @@ cyphertap/
 
 ```bash
 # Clone the repository
-git clone https://github.com/cypherflow/cyphertap.git
-cd cyphertap
+git clone https://github.com/cypherflow/plebtap.git
+cd plebtap
 
 # Install dependencies
 npm install
@@ -351,7 +351,7 @@ npm run build
 ### Component
 
 ```svelte
-<Cyphertap />
+<Plebtap />
 ```
 
 No props required - the component manages all state internally.
@@ -360,10 +360,10 @@ No props required - the component manages all state internally.
 
 #### Properties (Reactive)
 
-- `cyphertap.isLoggedIn: boolean` - User authentication status
-- `cyphertap.isReady: boolean` - Wallet initialization status
-- `cyphertap.balance: number` - Current balance in sats
-- `cyphertap.npub: string | null` - User's npub
+- `plebtap.isLoggedIn: boolean` - User authentication status
+- `plebtap.isReady: boolean` - Wallet initialization status
+- `plebtap.balance: number` - Current balance in sats
+- `plebtap.npub: string | null` - User's npub
 
 #### Methods
 
@@ -404,9 +404,9 @@ MIT License
 
 ## Links
 
-- 🚀 [Live Demo](https://cyphertap.cypherflow.ai)
-- [GitHub Repository](https://github.com/cypherflow/cyphertap)
-- [NPM Package](https://www.npmjs.com/package/cyphertap)
+- 🚀 [Live Demo](https://plebtap.cypherflow.ai)
+- [GitHub Repository](https://github.com/cypherflow/plebtap)
+- [NPM Package](https://www.npmjs.com/package/plebtap)
 - [CypherFlow](https://cypherflow.ai)
 
 ## Acknowledgments

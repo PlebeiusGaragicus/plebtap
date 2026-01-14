@@ -1,5 +1,5 @@
 {
-	"name": "cyphertap",
+	"name": "plebtap",
 	"description": "Nostr, Lightning and Ecash on a single Button component",
 	"version": "0.0.36",
 	"scripts": {
@@ -40,14 +40,14 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/cypherflow/cyphertap.git"
+		"url": "git+https://github.com/cypherflow/plebtap.git"
 	},
 	"author": "cypherflow",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/cypherflow/cyphertap/issues"
+		"url": "https://github.com/cypherflow/plebtap/issues"
 	},
-	"homepage": "https://github.com/cypherflow/cyphertap#readme",
+	"homepage": "https://github.com/cypherflow/plebtap#readme",
 	"peerDependencies": {
 		"svelte": "^5.0.0"
 	},

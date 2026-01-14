@@ -1,4 +1,4 @@
-// src/lib/api/cyphertap-api.svelte.ts
+// src/lib/api/plebtap-api.svelte.ts
 import { 
   type NDKFilter, 
   type NDKRawEvent, 
@@ -21,8 +21,8 @@ import {
 } from '$lib/stores/wallet.js';
 import { get, derived } from 'svelte/store';
 
-export class CyphertapAPI {
-  private static instance: CyphertapAPI | null = null;
+export class PlebtapAPI {
+  private static instance: PlebtapAPI | null = null;
 
   // Create derived stores for reactive state
   private _isLoggedIn = derived(
@@ -83,11 +83,11 @@ export class CyphertapAPI {
     return this.#npub;
   }
 
-  static getInstance(): CyphertapAPI {
-    if (!CyphertapAPI.instance) {
-      CyphertapAPI.instance = new CyphertapAPI();
+  static getInstance(): PlebtapAPI {
+    if (!PlebtapAPI.instance) {
+      PlebtapAPI.instance = new PlebtapAPI();
     }
-    return CyphertapAPI.instance;
+    return PlebtapAPI.instance;
   }
 
   // Public API methods
@@ -202,7 +202,7 @@ export class CyphertapAPI {
       // NDKPublishError is thrown when not enough relays confirm receipt,
       // but the event is still cached locally and will be retried automatically - #TODO VERIFY THIS
       // by the unpublished events monitor. Log but don't throw.
-      console.warn('[CypherTap] Publish may have failed to reach relays, event cached for retry:', e);
+      console.warn('[PlebTap] Publish may have failed to reach relays, event cached for retry:', e);
     }
     
     return {
@@ -273,4 +273,4 @@ export class CyphertapAPI {
 }
 
 // Export singleton instance
-export const cyphertap = CyphertapAPI.getInstance();
+export const plebtap = PlebtapAPI.getInstance();

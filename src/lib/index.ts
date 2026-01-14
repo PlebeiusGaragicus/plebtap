@@ -1,10 +1,10 @@
 // src/lib/index.ts
 // Main component
 import './styles.css';
-export { default as Cyphertap } from '$lib/components/cyphertap/cyphertap.svelte';
+export { default as Plebtap } from '$lib/components/plebtap/plebtap.svelte';
 
 // Programmatic API
-export { cyphertap } from '$lib/api/cyphertap-api.svelte.js';
+export { plebtap } from '$lib/api/plebtap-api.svelte.js';
 
 // Navigation state (for external control of popover)
 export { isUserMenuOpen } from '$lib/stores/navigation.js';

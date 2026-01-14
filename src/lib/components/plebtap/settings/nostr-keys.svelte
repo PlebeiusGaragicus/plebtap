@@ -1,4 +1,4 @@
-<!-- src/lib/components/cyphertap/settings/nostr-keys.svelte -->
+<!-- src/lib/components/plebtap/settings/nostr-keys.svelte -->
 <script lang="ts">
 	import { currentUser, ndkInstance } from '$lib/stores/nostr.js';
 	import { copyToClipboard } from '$lib/utils/clipboard.js';

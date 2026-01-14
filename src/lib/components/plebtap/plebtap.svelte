@@ -1,4 +1,4 @@
-<!-- src/lib/components/cyphertap/cyphertap.svelte -->
+<!-- src/lib/components/plebtap/plebtap.svelte -->
 <script lang="ts">
 	import {
 		initNavigation,
@@ -8,7 +8,7 @@
 	import { MediaQuery } from 'svelte/reactivity';
 	import { Popover, PopoverTrigger, PopoverContent }  from '$lib/components/ui/popover/index.js';
 	import ViewRouter from './views/view-router.svelte';
-	import CyphertapTrigger from './cyphertap-trigger.svelte';
+	import PlebtapTrigger from './plebtap-trigger.svelte';
 
 	import { Drawer, DrawerTrigger, DrawerContent }  from '$lib/components/ui/drawer/index.js';
 	import { onMount } from 'svelte';
@@ -31,7 +31,7 @@
 	<div class="relative">
 		<Popover bind:open={$isUserMenuOpen}>
 			<PopoverTrigger>
-				<CyphertapTrigger />
+				<PlebtapTrigger />
 			</PopoverTrigger>
 			<PopoverContent align="end" class="w-80 overflow-hidden p-0">
 				<ViewRouter {isDesktop} />
@@ -41,7 +41,7 @@
 {:else}
 	<Drawer bind:open={$isUserMenuOpen} shouldScaleBackground>
 		<DrawerTrigger>
-			<CyphertapTrigger />
+			<PlebtapTrigger />
 		</DrawerTrigger>
 		<DrawerContent class="pt-0">
 			<ViewRouter {isDesktop} />

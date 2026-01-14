@@ -1,4 +1,4 @@
-<!-- src/lib/components/cyphertap/settings/mint-list-item.svelte -->
+<!-- src/lib/components/plebtap/settings/mint-list-item.svelte -->
 <script lang="ts">
 	import { removeMint, setAsMainMint, addMint } from '$lib/stores/wallet.js';
 	import {

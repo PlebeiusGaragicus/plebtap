@@ -2,7 +2,7 @@
 <script lang="ts">
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
-	import { Cyphertap, cyphertap } from '$lib/index.js';
+	import { Plebtap, plebtap } from '$lib/index.js';
 	import { copyToClipboard } from '$lib/utils/clipboard.js';
 	import Copy from '@lucide/svelte/icons/copy';
 	import { toast } from 'svelte-sonner';
@@ -25,7 +25,7 @@
 		invoiceAmount: '',
 		tokenAmount: '',
 		cashuToken: '',
-		textNote: 'Hello Nostr from CypherTap!',
+		textNote: 'Hello Nostr from PlebTap!',
 		messageToEncrypt: 'Secret message',
 		recipientPubkey: '',
 		encryptedToDecrypt: '',
@@ -45,19 +45,19 @@
 
 	// User info functions
 	function getNpub() {
-		const npub = cyphertap.getUserNpub();
+		const npub = plebtap.getUserNpub();
 		results.npub = npub || 'Not available';
 		toast.success('NPub retrieved!');
 	}
 
 	function getUserHex() {
-		const hex = cyphertap.getUserHex();
+		const hex = plebtap.getUserHex();
 		results.userHex = hex || 'Not available';
 		toast.success('User hex retrieved!');
 	}
 
 	function getConnectionStatus() {
-		const status = cyphertap.getConnectionStatus();
+		const status = plebtap.getConnectionStatus();
 		results.connectionStatus = `${status.connected}/${status.total} relays connected`;
 		toast.success('Connection status retrieved!');
 	}
@@ -67,9 +67,9 @@
 	async function generateInvoice() {
 		await handleAsync(async () => {
 			const amount = parseInt(inputs.invoiceAmount);
-			const result = await cyphertap.createLightningInvoice(
+			const result = await plebtap.createLightningInvoice(
 				amount,
-				`${amount} sat invoice from CypherTap demo`
+				`${amount} sat invoice from PlebTap demo`
 			);
 			results.invoice = result.bolt11;
 			toast.success(`${amount} sat invoice generated!`);
@@ -82,7 +82,7 @@
 				toast.error('Please enter a BOLT11 invoice');
 				return;
 			}
-			const result = await cyphertap.sendLightningPayment(inputs.bolt11ToPay);
+			const result = await plebtap.sendLightningPayment(inputs.bolt11ToPay);
 			if (result.success) {
 				toast.success('Payment sent successfully!');
 				inputs.bolt11ToPay = '';
@@ -94,9 +94,9 @@
 	async function generateToken() {
 		await handleAsync(async () => {
 			const amount = parseInt(inputs.tokenAmount);
-			const result = await cyphertap.generateEcashToken(
+			const result = await plebtap.generateEcashToken(
 				amount,
-				`${amount} sat token from CypherTap demo`
+				`${amount} sat token from PlebTap demo`
 			);
 			results.token = result.token;
 			toast.success(`${amount} sat ecash token generated!`);
@@ -105,7 +105,7 @@
 
 	async function receiveToken() {
 		await handleAsync(async () => {
-			const result = await cyphertap.receiveEcashToken(inputs.cashuToken);
+			const result = await plebtap.receiveEcashToken(inputs.cashuToken);
 			toast.success(`${result.amount} sat ecash token received!`);
 		}, 'Failed to receive token');
 	}
@@ -117,7 +117,7 @@
 				toast.error('Please enter some text');
 				return;
 			}
-			const event = await cyphertap.publishTextNote(inputs.textNote);
+			const event = await plebtap.publishTextNote(inputs.textNote);
 			results.publishedEventId = event.id;
 			toast.success('Note published to Nostr!');
 		}, 'Failed to publish note');
@@ -125,9 +125,9 @@
 
 	async function signEvent() {
 		await handleAsync(async () => {
-			const event = await cyphertap.signEvent({
+			const event = await plebtap.signEvent({
 				kind: 1,
-				content: 'This is a signed event from CypherTap demo'
+				content: 'This is a signed event from PlebTap demo'
 			});
 			results.signedEvent = JSON.stringify(
 				{
@@ -156,7 +156,7 @@
 				return;
 			}
 
-			const encrypted = await cyphertap.encrypt(inputs.messageToEncrypt, recipientHex);
+			const encrypted = await plebtap.encrypt(inputs.messageToEncrypt, recipientHex);
 			results.encryptedMessage = encrypted;
 			toast.success('Message encrypted!');
 		}, 'Failed to encrypt message');
@@ -169,7 +169,7 @@
 				return;
 			}
 
-			const decrypted = await cyphertap.decrypt(inputs.encryptedToDecrypt, inputs.senderPubkey);
+			const decrypted = await plebtap.decrypt(inputs.encryptedToDecrypt, inputs.senderPubkey);
 			results.decryptedMessage = decrypted;
 			toast.success('Message decrypted!');
 		}, 'Failed to decrypt message');
@@ -179,17 +179,17 @@
 	// Debug logging to see reactive changes
 	$effect(() => {
 		console.log('🔄 Reactive state changed:', {
-			isLoggedIn: cyphertap.isLoggedIn,
-			isReady: cyphertap.isReady,
-			balance: cyphertap.balance,
-			npub: cyphertap.npub
+			isLoggedIn: plebtap.isLoggedIn,
+			isReady: plebtap.isReady,
+			balance: plebtap.balance,
+			npub: plebtap.npub
 		});
 	});
 </script>
 
 <div class="container mx-auto max-w-4xl p-4">
 	<header class="mb-8 text-center">
-		<h1 class="mb-4 text-4xl font-bold">CypherTap Component Library</h1>
+		<h1 class="mb-4 text-4xl font-bold">PlebTap Component Library</h1>
 		<p class="text-lg text-muted-foreground">
 			Nostr, Lightning and Ecash in a single Button component
 		</p>
@@ -199,25 +199,25 @@
 	<div class="mb-2 rounded-lg border p-6">
 		<h2 class="mb-4 text-2xl font-semibold">Component</h2>
 		<div class="flex flex-col items-center gap-4">
-			<Cyphertap />
+			<Plebtap />
 		</div>
 	</div>
 
-	{#if cyphertap.isLoggedIn}
+	{#if plebtap.isLoggedIn}
 		<!-- Real-time Status -->
 		<div class="my-6 rounded-lg border p-4">
 			<h3 class="mb-2 text-lg font-semibold">Real-time Status</h3>
 			<div class="grid gap-2 text-sm md:grid-cols-3">
-				<p><strong>Logged In:</strong> {cyphertap.isLoggedIn ? '✅' : '❌'}</p>
-				<p><strong>Wallet Ready:</strong> {cyphertap.isReady ? '✅' : '❌'}</p>
+				<p><strong>Logged In:</strong> {plebtap.isLoggedIn ? '✅' : '❌'}</p>
+				<p><strong>Wallet Ready:</strong> {plebtap.isReady ? '✅' : '❌'}</p>
 			</div>
 			<div class="mt-2 text-xs break-all text-muted-foreground">
-				<p><strong>npub:</strong> {cyphertap.npub || 'Not available'}</p>
+				<p><strong>npub:</strong> {plebtap.npub || 'Not available'}</p>
 			</div>
 		</div>
 	{/if}
 
-	{#if cyphertap.isReady}
+	{#if plebtap.isReady}
 		<!-- API Demo -->
 		<div class="flex flex-col gap-6">
 			<!-- Nostr -->
@@ -362,12 +362,12 @@
 		<!-- Login Required -->
 		<div class="rounded-lg border p-8 text-center">
 			<h3 class="mb-4 text-xl font-semibold">
-				{cyphertap.isLoggedIn ? 'Initializing Wallet...' : 'Login Required'}
+				{plebtap.isLoggedIn ? 'Initializing Wallet...' : 'Login Required'}
 			</h3>
 			<p class="text-muted-foreground">
-				{cyphertap.isLoggedIn
+				{plebtap.isLoggedIn
 					? 'Please wait while we set up your wallet...'
-					: 'Please click the CypherTap Button above to login and access the API features.'}
+					: 'Please click the PlebTap Button above to login and access the API features.'}
 			</p>
 		</div>
 	{/if}

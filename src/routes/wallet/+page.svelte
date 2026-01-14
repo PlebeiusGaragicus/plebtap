@@ -1,5 +1,5 @@
 <script>
-	import ViewRouter from "$lib/components/cyphertap/views/view-router.svelte";
+	import ViewRouter from "$lib/components/plebtap/views/view-router.svelte";
 
 </script>
 

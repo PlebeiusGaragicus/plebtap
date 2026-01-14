@@ -1,4 +1,4 @@
-<!-- src/lib/components/cyphertap/views/view-router.svelte -->
+<!-- src/lib/components/plebtap/views/view-router.svelte -->
 <script lang="ts">
 	import { currentView, initNavigation, inTransition } from '$lib/stores/navigation.js';
 	import { MediaQuery } from 'svelte/reactivity';

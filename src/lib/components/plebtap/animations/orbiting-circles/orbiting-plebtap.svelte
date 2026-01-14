@@ -18,7 +18,7 @@
 	<span
 		class="pointer-events-none bg-gradient-to-b from-black to-gray-300/80 bg-clip-text text-center text-6xl leading-none font-semibold whitespace-pre-wrap text-transparent dark:from-white dark:to-slate-900/10"
 	>
-		CypherTap Wallet
+		PlebTap Wallet
 	</span>
 
 	<!--  Inner Circles  -->

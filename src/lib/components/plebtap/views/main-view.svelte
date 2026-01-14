@@ -79,8 +79,8 @@
 	<!-- Footer warning text -->
 	<div class="mt-6 border-t pt-2 text-center text-xs text-muted-foreground">
 		<p>
-			CypherTap is <a
-				href="https://github.com/cypherflow/cyphertap"
+			PlebTap is <a
+				href="https://github.com/cypherflow/plebtap"
 				target="_blank"
 				class="inline text-blue-500 underline">open source</a
 			> and experimental.
