@@ -22,7 +22,6 @@
 
 <ViewContainer className="space-y-4 p-4">
 	<div class="text-center">
-		<h3 class="text-lg font-medium">Welcome to CypherFlow</h3>
 		<p class="text-sm text-gray-500">Choose how you want to get started</p>
 	</div>
 

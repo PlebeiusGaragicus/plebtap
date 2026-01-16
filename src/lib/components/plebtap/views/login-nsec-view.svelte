@@ -61,7 +61,7 @@
 					<p class="text-sm">
 						Private keys are stored unencrypted in browser storage. We recommend
 						<strong>creating a new account</strong> or
-						<strong>linking an existing CypherFlow account</strong> instead.
+						<strong>linking an existing PlebTap account</strong> instead.
 					</p>
 					<p class="text-xs text-muted-foreground">
 						Only proceed with throwaway keys or if you understand the risks.

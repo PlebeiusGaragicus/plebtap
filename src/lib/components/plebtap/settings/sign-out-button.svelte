@@ -43,7 +43,7 @@
 				<LogOut class="mr-2 h-5 w-5 text-destructive" />
 				Sign Out
 			</DialogTitle>
-			<DialogDescription>You're about to sign out of CypherFlow.</DialogDescription>
+			<DialogDescription>You're about to sign out of PlebTap.</DialogDescription>
 		</DialogHeader>
 
 		<div class="grid gap-4 py-4">
