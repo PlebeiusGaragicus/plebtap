@@ -29,7 +29,7 @@ export class NegentropyWebSocket {
     private ws: WebSocket | null = null;
     private url: string;
     private debug;
-    private messageHandlers = new Map<string, (message: any[]) => void>();
+    private messageHandlers = new Map<string, (message: unknown[]) => void>();
     
     constructor(url: string) {
         this.url = url;
@@ -113,7 +113,7 @@ export class NegentropyWebSocket {
         this.ws.send(message);
     }
     
-    addMessageHandler(subId: string, handler: (message: any[]) => void): void {
+    addMessageHandler(subId: string, handler: (message: unknown[]) => void): void {
         const d = this.debug.extend('addHandler');
         d.log(`Adding handler for subscription: ${subId}`);
         this.messageHandlers.set(subId, handler);
@@ -234,7 +234,7 @@ export async function performMultiFilterNegentropySync(
                 const filterResult = await new Promise<{ have: string[], need: string[] }>((resolve, reject) => {
                     let isComplete = false;
                     
-                    const handleNegentropyMessage = async (message: any[]) => {
+                    const handleNegentropyMessage = async (message: unknown[]) => {
                         const msgD = d.extend(`filter${filterIndex + 1}`);
                         msgD.log('Handling Negentropy message:', message);
                         

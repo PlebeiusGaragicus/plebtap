@@ -73,9 +73,27 @@ export const getNegentropy = () => {
 };
 
 // Declare global types for Negentropy
+interface NegentropyStorageVectorConstructor {
+    new (): NegentropyStorageVectorInstance;
+}
+
+interface NegentropyStorageVectorInstance {
+    insert(timestamp: number, id: string): void;
+    seal(): void;
+}
+
+interface NegentropyConstructor {
+    new (storage: NegentropyStorageVectorInstance, frameSize: number): NegentropyInstanceLocal;
+}
+
+interface NegentropyInstanceLocal {
+    initiate(): Uint8Array;
+    reconcile(msg: Uint8Array): [Uint8Array | null, string[], string[]];
+}
+
 declare global {
     interface Window {
-        Negentropy: any;
-        NegentropyStorageVector: any;
+        Negentropy: NegentropyConstructor;
+        NegentropyStorageVector: NegentropyStorageVectorConstructor;
     }
 }

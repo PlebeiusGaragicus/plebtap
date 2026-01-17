@@ -3,6 +3,7 @@
 	import { currentView, initNavigation, inTransition } from '$lib/stores/navigation.js';
 	import { MediaQuery } from 'svelte/reactivity';
 	import LoginGenerateKeyView from './login-generate-key-view.svelte';
+	import LoginImportMnemonicView from './login-import-mnemonic-view.svelte';
 	import LoginLinkDeviceView from './login-link-device-view.svelte';
 	import LoginNip_07View from './login-nip-07-view.svelte';
 	import LoginNsecView from './login-nsec-view.svelte';
@@ -29,6 +30,7 @@
 		'onboarding': OnboardingView,
 		'login': LoginView,
 		'login-private-key': LoginNsecView,
+		'login-import-mnemonic': LoginImportMnemonicView,
 		'login-link-device': LoginLinkDeviceView,
 		'login-nip-07': LoginNip_07View,
 		'login-generate-key': LoginGenerateKeyView,

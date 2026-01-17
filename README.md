@@ -8,10 +8,10 @@ Follow me on [Nostr](https://njump.me/npub1strjxxh7fzhrvgkraew4fpt6ppu973sc3p9cm
 [![NPM Version](https://img.shields.io/npm/v/plebtap)](https://www.npmjs.com/package/plebtap)
 [![License](https://img.shields.io/npm/l/plebtap)](https://github.com/cypherflow/plebtap/blob/main/LICENSE)
 
-> **⚠️ EXPERIMENTAL SOFTWARE**: PlebTap is in beta and experimental. Private keys from newly created accounts or nsec imports are currently stored **unencrypted** in browser localStorage. Use at your own risk and never store more sats than you're willing to lose. Only use new keypairs or import your nsec if you understand the security implications.
+> **⚠️ EXPERIMENTAL SOFTWARE**: PlebTap is in beta. Private keys are encrypted and stored in IndexedDB using PIN or biometric (WebAuthn) protection. You can also opt for insecure storage if preferred. *Use at your own risk and never store more sats than you're willing to lose.*
 
 
-## 🚀 [Live Demo](https://cypherflow.github.io/plebtap/)  
+## 🚀 [Live Demo](https://PlebeiusGaragicus.github.io/plebtap/)
 
 ## Overview
 

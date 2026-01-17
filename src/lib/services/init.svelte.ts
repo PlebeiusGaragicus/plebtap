@@ -6,8 +6,11 @@ import {
   ndkInstance,
   currentUser,
   autoLogin,
-  EXTENSION_LOGIN
 } from '$lib/stores/nostr.js';
+import {
+  hasExtensionLoginMarker,
+  clearExtensionLoginMarker,
+} from '$lib/services/secureStorage.js';
 import { initWallet } from '$lib/stores/wallet.js';
 import { createDebug } from '$lib/utils/debug.js';
 import { initNavigation } from '../stores/navigation.js';
@@ -61,14 +64,15 @@ export async function initializeApp(skipAuth = false): Promise<{
       } catch (error) {
         d.error('Auto-login error:', error);
         // If extension marker exists but extension is not available
-        if (localStorage.getItem(EXTENSION_LOGIN) === 'true' && !window.nostr) {
+        const hasExtMarker = await hasExtensionLoginMarker();
+        if (hasExtMarker && !window.nostr) {
           appState.error = 'Nostr extension not found. Please install or enable your extension.';
         } else {
           appState.error = error instanceof Error ? error.message : 'Auto-login failed';
         }
 
         // Clear any problematic markers
-        localStorage.removeItem(EXTENSION_LOGIN);
+        await clearExtensionLoginMarker();
         return { initialized: false };
       }
     } else {

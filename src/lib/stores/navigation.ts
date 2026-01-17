@@ -12,6 +12,7 @@ export type ViewName =
   | 'onboarding'
   | 'login'
   | 'login-private-key'
+  | 'login-import-mnemonic'
   | 'login-link-device'  
   | 'login-nip-07'
   | 'login-generate-key'
@@ -28,6 +29,7 @@ const viewHierarchy: Record<ViewName, number> = {
   'onboarding': -1,
   'login': 0,
   'login-private-key': 1,
+  'login-import-mnemonic': 1,
   'login-link-device': 1,
   'login-nip-07': 1,
   'login-generate-key': 1,
@@ -145,7 +147,7 @@ export function endTransition() {
 /**
  * Navigate to transaction details view
  */
-export function viewTransactionDetails(transaction: any, sourceView: ViewName = 'main') {
+export function viewTransactionDetails(transaction: NDKCashuWalletTx, sourceView: ViewName = 'main') {
   context.update((ctx) => ({
     ...ctx,
     transaction,

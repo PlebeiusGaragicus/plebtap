@@ -6,6 +6,7 @@
 	import { copyToClipboard } from '$lib/utils/clipboard.js';
 	import Copy from '@lucide/svelte/icons/copy';
 	import { toast } from 'svelte-sonner';
+	import { securityState } from '$lib/stores/security.svelte.js';
 
 	// Demo state
 	let results = $state({
@@ -203,13 +204,16 @@
 		</div>
 	</div>
 
+	<!-- Real-time Status -->
+	<!-- {#if plebtap.isLoggedIn && plebtap.isReady} -->
 	{#if plebtap.isLoggedIn}
-		<!-- Real-time Status -->
 		<div class="my-6 rounded-lg border p-4">
 			<h3 class="mb-2 text-lg font-semibold">Real-time Status</h3>
-			<div class="grid gap-2 text-sm md:grid-cols-3">
+			<div class="grid gap-2 text-sm md:grid-cols-4">
 				<p><strong>Logged In:</strong> {plebtap.isLoggedIn ? '✅' : '❌'}</p>
 				<p><strong>Wallet Ready:</strong> {plebtap.isReady ? '✅' : '❌'}</p>
+				<p><strong>Wallet Unlocked:</strong> {securityState.isUnlocked ? '✅' : '❌'}</p>
+				<p><strong>Auth Method:</strong> {securityState.authMethod || 'None'}</p>
 			</div>
 			<div class="mt-2 text-xs break-all text-muted-foreground">
 				<p><strong>npub:</strong> {plebtap.npub || 'Not available'}</p>
@@ -358,16 +362,25 @@
 				</div>
 			</div>
 		</div>
-	{:else}
-		<!-- Login Required -->
+	{:else if securityState.isInitializing || securityState.hasStoredKey || plebtap.isLoggedIn}
+		<!-- Loading / Logging in -->
 		<div class="rounded-lg border p-8 text-center">
-			<h3 class="mb-4 text-xl font-semibold">
-				{plebtap.isLoggedIn ? 'Initializing Wallet...' : 'Login Required'}
-			</h3>
+			<div class="flex items-center justify-center gap-3">
+				<span class="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+				<h3 class="text-xl font-semibold">
+					{securityState.isInitializing ? 'Loading...' : 'Logging in...'}
+				</h3>
+			</div>
+			<p class="mt-2 text-muted-foreground">
+				Please wait while we set up your wallet...
+			</p>
+		</div>
+	{:else}
+		<!-- No stored credentials - Login Required -->
+		<div class="rounded-lg border p-8 text-center">
+			<h3 class="mb-4 text-xl font-semibold">Login Required</h3>
 			<p class="text-muted-foreground">
-				{plebtap.isLoggedIn
-					? 'Please wait while we set up your wallet...'
-					: 'Please click the PlebTap Button above to login and access the API features.'}
+				Click the PlebTap button above to login and access the API features.
 			</p>
 		</div>
 	{/if}

@@ -101,7 +101,7 @@ export async function initWallet(isNewUser: boolean = false) {
       }
     };
 
-    userWallet.onMintInfoLoaded = (mint: string, info: any) => {
+    userWallet.onMintInfoLoaded = (mint: string, info: { version?: string }) => {
       dMint.log(
         `Successfully loaded mint info for ${mint}:`,
         info.version || "Unknown version"
@@ -118,7 +118,7 @@ export async function initWallet(isNewUser: boolean = false) {
       }
     };
 
-    userWallet.onMintKeysLoaded = (mint: string, keysets: any) => {
+    userWallet.onMintKeysLoaded = (mint: string, keysets: Map<string, unknown>) => {
       dMint.log(
         `Successfully loaded mint keys for ${mint}, ${keysets.size} keysets loaded`
       );
