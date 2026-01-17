@@ -194,8 +194,6 @@ export interface SecureStorageSchema {
   preferences: SecurityPreferences;
   /** User's public key (not sensitive, for identification) */
   publicKeyHex: PublicKeyHex | null;
-  /** User's npub (not sensitive, for display when locked) */
-  npub: Npub | null;
   /** Schema version for migrations */
   schemaVersion: number;
 }

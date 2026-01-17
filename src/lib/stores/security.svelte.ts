@@ -56,7 +56,7 @@ import {
   getAuthMethod,
   getPinLength,
   updateSecurityPreferences,
-  getStoredNpub,
+  getPublicKey,
 } from '$lib/services/secureStorage.js';
 import {
   isPlatformAuthenticatorAvailable,
@@ -154,13 +154,16 @@ export async function initializeSecurity(): Promise<void> {
     const webauthnAvailable = await isPlatformAuthenticatorAvailable();
     
     // Load stored state
-    const [authMethod, pinLength, hasKey, storedNpub, storage] = await Promise.all([
+    const [authMethod, pinLength, hasKey, publicKeyHex, storage] = await Promise.all([
       getAuthMethod(),
       getPinLength(),
       hasEncryptedKey(),
-      getStoredNpub(),
+      getPublicKey(),
       readStorage(),
     ]);
+
+    // Derive npub from publicKeyHex if available
+    const storedNpub = publicKeyHex ? publicKeyToNpub(publicKeyHex) : null;
 
     // Update state
     securityState.authMethod = authMethod;
@@ -208,11 +211,8 @@ export async function setupPINAuth(
     // Create PIN hash for verification
     const pinHash = hashPinForVerification(typedPin);
     
-    // Convert to npub for storage (available when locked)
-    const npub = publicKeyToNpub(publicKeyHex);
-    
     // Store both
-    await storeEncryptedKey(encryptedBlob, publicKeyHex, npub);
+    await storeEncryptedKey(encryptedBlob, publicKeyHex);
     await storePinHash(pinHash, pinLength);
     
     // Optionally encrypt and store mnemonic
@@ -323,11 +323,8 @@ export async function setupWebAuthnAuth(
     // Step 3: Encrypt private key with the random key (using key-based encryption)
     const encryptedBlob = encryptWithKey(privateKeyHex, randomKey);
     
-    // Convert to npub for storage (available when locked)
-    const npub = publicKeyToNpub(publicKeyHex);
-    
     // Step 4: Store everything
-    await storeEncryptedKey(encryptedBlob, publicKeyHex, npub);
+    await storeEncryptedKey(encryptedBlob, publicKeyHex);
     await storeWebAuthnCredential(storedCredential, encryptionKeyData);
     
     // Optionally encrypt and store mnemonic
@@ -730,11 +727,8 @@ export async function storeInsecurely(
     // Encrypt with the fixed key (using key-based encryption, no PIN validation)
     const encryptedBlob = encryptWithKey(privateKeyHex, INSECURE_STORAGE_KEY);
     
-    // Convert to npub for storage (available when locked)
-    const npub = publicKeyToNpub(publicKeyHex);
-    
     // Store
-    await storeEncryptedKey(encryptedBlob, publicKeyHex, npub);
+    await storeEncryptedKey(encryptedBlob, publicKeyHex);
     
     // Optionally encrypt and store mnemonic
     if (mnemonic) {
