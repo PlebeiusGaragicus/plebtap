@@ -90,8 +90,7 @@
 				<AlertTitle>Security Notice</AlertTitle>
 				<AlertDescription class="mt-2 space-y-3">
 					<p class="text-sm">
-						Your private key will be encrypted and stored securely using PIN or biometric protection.
-						For the best experience, we recommend <strong>creating a new account</strong> with seed phrase backup.
+						For the best experience, we recommend using <strong>a browser extension</strong> to login. Copying and pasting your private key is bad practice.
 					</p>
 					<Button size="sm" onclick={() => (securityWarningAccepted = true)} class="mt-2">
 						Continue

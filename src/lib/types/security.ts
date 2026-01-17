@@ -1,5 +1,6 @@
 // src/lib/types/security.ts
 // Branded types and interfaces for secure key management
+// Uses NIP-49 encryption (scrypt + XChaCha20-Poly1305)
 
 /**
  * Branded type helper - creates nominal types that prevent accidental mixing
@@ -41,41 +42,19 @@ export type Mnemonic = Brand<string, 'Mnemonic'>;
  */
 export type PIN = Brand<string, 'PIN'>;
 
-// ============================================================================
-// Encrypted Storage Types
-// ============================================================================
+/**
+ * NIP-49 encrypted private key (ncryptsec1...)
+ */
+export type Ncryptsec = Brand<string, 'Ncryptsec'>;
 
 /**
- * KDF (Key Derivation Function) parameters
+ * NIP-49 style encrypted mnemonic (ncryptmnem1...)
  */
-export interface KDFParams {
-  algorithm: 'pbkdf2' | 'scrypt';
-  iterations: number;
-  /** Memory cost in bytes (for scrypt) */
-  memory?: number;
-  /** Parallelism factor (for scrypt) */
-  parallelism?: number;
-}
+export type Ncryptmnem = Brand<string, 'Ncryptmnem'>;
 
-/**
- * Encrypted private key blob for secure storage
- */
-export interface EncryptedKeyBlob {
-  /** Version identifier for future compatibility */
-  version: 'plebtap-v1';
-  /** Encryption algorithm used */
-  algorithm: 'aes-256-gcm';
-  /** Salt for key derivation (base64) */
-  salt: string;
-  /** Initialization vector (base64) */
-  iv: string;
-  /** Encrypted data (base64) */
-  ciphertext: string;
-  /** Key derivation parameters */
-  kdfParams: KDFParams;
-  /** Timestamp of encryption */
-  createdAt: number;
-}
+// ============================================================================
+// Decrypted Key Material
+// ============================================================================
 
 /**
  * Decrypted key material (should be cleared from memory after use)
@@ -88,6 +67,10 @@ export interface DecryptedKey {
   /** Optional mnemonic if created from seed phrase */
   mnemonic?: Mnemonic;
 }
+
+// ============================================================================
+// PIN Hash for Verification
+// ============================================================================
 
 /**
  * PIN hash for verification (not the PIN itself)
@@ -177,13 +160,13 @@ export interface SecurityPreferences {
 }
 
 /**
- * Complete secure storage schema
+ * Secure storage schema using NIP-49 encryption format
  */
 export interface SecureStorageSchema {
-  /** Encrypted private key blob */
-  encryptedKey: EncryptedKeyBlob | null;
-  /** Encrypted mnemonic blob (optional, only if created from seed) */
-  encryptedMnemonic: EncryptedMnemonicBlob | null;
+  /** Encrypted private key in NIP-49 format (ncryptsec1...) */
+  encryptedKey: Ncryptsec | null;
+  /** Encrypted mnemonic in NIP-49 style format (ncryptmnem1...) */
+  encryptedMnemonic: Ncryptmnem | null;
   /** PIN verification hash (only for PIN auth) */
   pinHash: PINHash | null;
   /** WebAuthn credential (if using WebAuthn auth) */
@@ -194,22 +177,8 @@ export interface SecureStorageSchema {
   preferences: SecurityPreferences;
   /** User's public key (not sensitive, for identification) */
   publicKeyHex: PublicKeyHex | null;
-  /** Schema version for migrations */
+  /** Schema version */
   schemaVersion: number;
-}
-
-/**
- * Encrypted mnemonic blob (imported from crypto.ts)
- * Re-declared here to avoid circular imports
- */
-export interface EncryptedMnemonicBlob {
-  version: 'plebtap-mnemonic-v1';
-  algorithm: 'aes-256-gcm';
-  salt: string;
-  iv: string;
-  ciphertext: string;
-  kdfParams: KDFParams;
-  createdAt: number;
 }
 
 // ============================================================================
@@ -308,46 +277,24 @@ export function isValidPIN(value: string, expectedLength?: PinLength): value is 
 }
 
 /**
- * Validates an EncryptedKeyBlob structure
+ * Checks if a value is a valid NIP-49 ncryptsec encrypted key
  */
-export function isValidEncryptedKeyBlob(value: unknown): value is EncryptedKeyBlob {
-  if (!value || typeof value !== 'object') return false;
-  const blob = value as Record<string, unknown>;
-  
-  return (
-    blob.version === 'plebtap-v1' &&
-    blob.algorithm === 'aes-256-gcm' &&
-    typeof blob.salt === 'string' &&
-    typeof blob.iv === 'string' &&
-    typeof blob.ciphertext === 'string' &&
-    typeof blob.kdfParams === 'object' &&
-    blob.kdfParams !== null &&
-    typeof blob.createdAt === 'number'
-  );
+export function isNip49EncryptedKey(value: unknown): value is Ncryptsec {
+  if (!value || typeof value !== 'string') return false;
+  return value.startsWith('ncryptsec1');
+}
+
+/**
+ * Checks if a value is a valid NIP-49 style ncryptmnem encrypted mnemonic
+ */
+export function isNip49EncryptedMnemonic(value: unknown): value is Ncryptmnem {
+  if (!value || typeof value !== 'string') return false;
+  return value.startsWith('ncryptmnem1');
 }
 
 // ============================================================================
 // Constants
 // ============================================================================
-
-/**
- * Default KDF parameters for PIN-based encryption
- * These provide a balance between security and performance
- */
-export const DEFAULT_KDF_PARAMS: KDFParams = {
-  algorithm: 'pbkdf2',
-  iterations: 600000, // OWASP 2023 recommendation for PBKDF2-SHA256
-};
-
-/**
- * Scrypt parameters for higher security (when performance allows)
- */
-export const SCRYPT_KDF_PARAMS: KDFParams = {
-  algorithm: 'scrypt',
-  iterations: 2 ** 14, // N = 16384
-  memory: 8, // r = 8
-  parallelism: 1, // p = 1
-};
 
 /**
  * Default security preferences for new accounts
@@ -362,9 +309,9 @@ export const DEFAULT_SECURITY_PREFERENCES: SecurityPreferences = {
 };
 
 /**
- * Current schema version for migrations
+ * Current schema version (NIP-49 format)
  */
-export const CURRENT_SCHEMA_VERSION = 1;
+export const CURRENT_SCHEMA_VERSION = 2;
 
 /**
  * Rate limiting constants for failed PIN attempts

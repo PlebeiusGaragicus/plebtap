@@ -1,6 +1,7 @@
 // src/lib/stores/security.svelte.ts
 // Svelte 5 runes-based security state management
 // Implements PIN OR WebAuthn authentication (user chooses one)
+// Uses NIP-49 encryption exclusively (scrypt + XChaCha20-Poly1305)
 
 import { BROWSER as browser } from 'esm-env';
 import type {
@@ -9,8 +10,12 @@ import type {
   UnlockResult,
   PIN,
   PinLength,
-  AuthMethod,
   WebAuthnEncryptionKey,
+  Ncryptsec,
+  Ncryptmnem,
+  Mnemonic,
+  PrivateKeyHex,
+  PublicKeyHex,
 } from '$lib/types/security.js';
 import {
   PIN_RATE_LIMIT,
@@ -18,20 +23,19 @@ import {
   isValidPIN,
 } from '$lib/types/security.js';
 import {
-  encryptPrivateKey,
-  decryptPrivateKey,
-  encryptWithKey,
-  decryptWithKey,
-  encryptMnemonic,
-  decryptMnemonic,
-  encryptMnemonicWithKey,
-  decryptMnemonicWithKey,
   hashPinForVerification,
   verifyPin,
   privateKeyToKeyPair,
   publicKeyToNpub,
 } from '$lib/services/crypto.js';
-import type { Mnemonic } from '$lib/types/security.js';
+import {
+  encryptPrivateKeyNip49,
+  decryptPrivateKeyNip49,
+  encryptMnemonicNip49,
+  decryptMnemonicNip49,
+  NIP49_DEFAULT_LOGN,
+  NIP49_FAST_LOGN,
+} from '$lib/utils/nip49.js';
 import {
   readStorage,
   storeEncryptedKey,
@@ -40,7 +44,6 @@ import {
   hasEncryptedMnemonic,
   storePinHash,
   getPinHash,
-  hasPinSetup,
   recordFailedPinAttempt,
   resetFailedPinAttempts,
   getFailedPinAttempts,
@@ -48,7 +51,6 @@ import {
   storeWebAuthnCredential,
   getWebAuthnCredential,
   getWebAuthnEncryptionKey,
-  hasWebAuthnSetup,
   removeWebAuthnCredential,
   getEncryptedKey,
   hasEncryptedKey,
@@ -64,7 +66,6 @@ import {
   requestUserVerification,
   createStoredCredential,
 } from '$lib/services/webauthn.js';
-import type { PrivateKeyHex, PublicKeyHex } from '$lib/types/security.js';
 
 // ============================================================================
 // Reactive State
@@ -131,9 +132,6 @@ function setUnlockedState(key: DecryptedKey): void {
   if (unlockTimeoutHandle) {
     clearTimeout(unlockTimeoutHandle);
   }
-  
-  // Note: Session timeout is set elsewhere (in setSessionTimeout)
-  // For initial setup, we don't auto-lock immediately
 }
 
 // ============================================================================
@@ -187,9 +185,9 @@ export async function initializeSecurity(): Promise<void> {
 // ============================================================================
 
 /**
- * Set up PIN authentication
- * Encrypts the private key with a user-chosen PIN
- * Optionally encrypts and stores a mnemonic
+ * Set up PIN authentication using NIP-49 encryption
+ * Encrypts the private key with a user-chosen PIN using scrypt + XChaCha20-Poly1305
+ * Always encrypts and stores the mnemonic if provided
  */
 export async function setupPINAuth(
   privateKeyHex: PrivateKeyHex,
@@ -205,20 +203,20 @@ export async function setupPINAuth(
   const typedPin = pin as PIN;
 
   try {
-    // Encrypt the private key with the PIN
-    const encryptedBlob = encryptPrivateKey(privateKeyHex, typedPin);
+    // Encrypt the private key with NIP-49 (scrypt + XChaCha20-Poly1305)
+    const ncryptsec = encryptPrivateKeyNip49(privateKeyHex, typedPin, NIP49_DEFAULT_LOGN) as Ncryptsec;
     
-    // Create PIN hash for verification
+    // Create PIN hash for verification (faster than full decryption)
     const pinHash = hashPinForVerification(typedPin);
     
-    // Store both
-    await storeEncryptedKey(encryptedBlob, publicKeyHex);
+    // Store the encrypted key and PIN hash
+    await storeEncryptedKey(ncryptsec, publicKeyHex);
     await storePinHash(pinHash, pinLength);
     
-    // Optionally encrypt and store mnemonic
+    // Always encrypt and store mnemonic if provided
     if (mnemonic) {
-      const encryptedMnemonic = encryptMnemonic(mnemonic, typedPin);
-      await storeEncryptedMnemonic(encryptedMnemonic);
+      const ncryptmnem = encryptMnemonicNip49(mnemonic, typedPin, NIP49_DEFAULT_LOGN) as Ncryptmnem;
+      await storeEncryptedMnemonic(ncryptmnem);
     }
     
     // Update state
@@ -267,7 +265,8 @@ export async function changePIN(
       unlockResult.key.privateKeyHex,
       unlockResult.key.publicKeyHex,
       newPin,
-      newPinLength
+      newPinLength,
+      unlockResult.key.mnemonic
     );
 
     return result;
@@ -294,10 +293,10 @@ function generateRandomEncryptionKey(): string {
 }
 
 /**
- * Set up WebAuthn authentication
- * Encrypts the private key with a random key that's stored in IndexedDB
- * The random key is only accessible after WebAuthn verification succeeds
- * Optionally encrypts and stores a mnemonic
+ * Set up WebAuthn authentication using NIP-49 encryption
+ * Encrypts the private key with a random key using scrypt + XChaCha20-Poly1305
+ * The random key is stored in IndexedDB and only accessible after WebAuthn verification
+ * Always encrypts and stores the mnemonic if provided
  */
 export async function setupWebAuthnAuth(
   privateKeyHex: PrivateKeyHex,
@@ -313,24 +312,24 @@ export async function setupWebAuthnAuth(
     const registration = await registerCredential(publicKeyHex, 'PlebTap Wallet');
     const storedCredential = createStoredCredential(registration);
     
-    // Step 2: Generate random encryption key
+    // Step 2: Generate random encryption key (used as password for NIP-49)
     const randomKey = generateRandomEncryptionKey();
     const encryptionKeyData: WebAuthnEncryptionKey = {
       key: randomKey,
       createdAt: Date.now(),
     };
     
-    // Step 3: Encrypt private key with the random key (using key-based encryption)
-    const encryptedBlob = encryptWithKey(privateKeyHex, randomKey);
+    // Step 3: Encrypt private key with NIP-49 using the random key as password
+    const ncryptsec = encryptPrivateKeyNip49(privateKeyHex, randomKey, NIP49_DEFAULT_LOGN) as Ncryptsec;
     
     // Step 4: Store everything
-    await storeEncryptedKey(encryptedBlob, publicKeyHex);
+    await storeEncryptedKey(ncryptsec, publicKeyHex);
     await storeWebAuthnCredential(storedCredential, encryptionKeyData);
     
-    // Optionally encrypt and store mnemonic
+    // Always encrypt and store mnemonic if provided
     if (mnemonic) {
-      const encryptedMnemonic = encryptMnemonicWithKey(mnemonic, randomKey);
-      await storeEncryptedMnemonic(encryptedMnemonic);
+      const ncryptmnem = encryptMnemonicNip49(mnemonic, randomKey, NIP49_DEFAULT_LOGN) as Ncryptmnem;
+      await storeEncryptedMnemonic(ncryptmnem);
     }
     
     // Update state
@@ -360,6 +359,94 @@ export async function setupWebAuthnAuth(
 export async function disableWebAuthn(): Promise<void> {
   await removeWebAuthnCredential();
   securityState.authMethod = 'none';
+}
+
+/**
+ * Rotate WebAuthn credential
+ * This allows users to re-register their biometric authentication with a new credential
+ * while maintaining access to their encrypted keys
+ */
+export async function rotateWebAuthnCredential(): Promise<{ success: boolean; error?: string }> {
+  if (securityState.authMethod !== 'webauthn') {
+    return { success: false, error: 'WebAuthn authentication is not set up' };
+  }
+
+  try {
+    // Step 1: Get current credential and verify user
+    const oldCredential = await getWebAuthnCredential();
+    if (!oldCredential) {
+      return { success: false, error: 'No WebAuthn credential found' };
+    }
+
+    const verified = await requestUserVerification(oldCredential);
+    if (!verified) {
+      return { success: false, error: 'Biometric verification failed or was cancelled' };
+    }
+
+    // Step 2: Get current encryption key and decrypt private key
+    const oldEncryptionKey = await getWebAuthnEncryptionKey();
+    if (!oldEncryptionKey) {
+      return { success: false, error: 'Encryption key not found' };
+    }
+
+    const encryptedKey = await getEncryptedKey();
+    if (!encryptedKey) {
+      return { success: false, error: 'No encrypted key found' };
+    }
+
+    // Decrypt the private key
+    const privateKeyHex = decryptPrivateKeyNip49(encryptedKey, oldEncryptionKey.key);
+
+    // Decrypt mnemonic if present
+    let mnemonic: Mnemonic | undefined;
+    const encryptedMnemonic = await getEncryptedMnemonic();
+    if (encryptedMnemonic) {
+      try {
+        mnemonic = decryptMnemonicNip49(encryptedMnemonic, oldEncryptionKey.key);
+      } catch {
+        // Mnemonic decryption failed, continue with key rotation
+        console.warn('Mnemonic decryption failed during rotation');
+      }
+    }
+
+    // Step 3: Get public key for new credential registration
+    const publicKeyHex = await getPublicKey();
+    if (!publicKeyHex) {
+      return { success: false, error: 'Public key not found' };
+    }
+
+    // Step 4: Register NEW WebAuthn credential
+    const newRegistration = await registerCredential(publicKeyHex, 'PlebTap Wallet');
+    const newStoredCredential = createStoredCredential(newRegistration);
+
+    // Step 5: Generate NEW random encryption key
+    const newRandomKey = generateRandomEncryptionKey();
+    const newEncryptionKeyData: WebAuthnEncryptionKey = {
+      key: newRandomKey,
+      createdAt: Date.now(),
+    };
+
+    // Step 6: Re-encrypt with new key using NIP-49
+    const ncryptsec = encryptPrivateKeyNip49(privateKeyHex, newRandomKey, NIP49_DEFAULT_LOGN) as Ncryptsec;
+
+    // Step 7: Store new credential and encrypted data
+    await storeEncryptedKey(ncryptsec, publicKeyHex);
+    await storeWebAuthnCredential(newStoredCredential, newEncryptionKeyData);
+
+    // Re-encrypt and store mnemonic if present
+    if (mnemonic) {
+      const ncryptmnem = encryptMnemonicNip49(mnemonic, newRandomKey, NIP49_DEFAULT_LOGN) as Ncryptmnem;
+      await storeEncryptedMnemonic(ncryptmnem);
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to rotate WebAuthn credential:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Credential rotation failed',
+    };
+  }
 }
 
 // ============================================================================
@@ -453,7 +540,7 @@ export async function unlockWithPIN(pin: string): Promise<UnlockResult> {
   const typedPin = pin as PIN;
 
   try {
-    // Verify PIN against stored hash
+    // Verify PIN against stored hash (faster than full decryption)
     const storedHash = await getPinHash();
     if (storedHash && !verifyPin(typedPin, storedHash)) {
       await recordFailedPinAttempt();
@@ -461,18 +548,20 @@ export async function unlockWithPIN(pin: string): Promise<UnlockResult> {
     }
 
     // Get and decrypt the key
-    const encryptedBlob = await getEncryptedKey();
-    if (!encryptedBlob) {
+    const encryptedKey = await getEncryptedKey();
+    if (!encryptedKey) {
       return { success: false, error: 'No encrypted key found' };
     }
 
-    const decryptedKey = decryptPrivateKey(encryptedBlob, typedPin);
+    // Decrypt using NIP-49
+    const privateKeyHex = decryptPrivateKeyNip49(encryptedKey, typedPin);
+    const decryptedKey = privateKeyToKeyPair(privateKeyHex);
     
     // Try to decrypt mnemonic if available
     const encryptedMnemonic = await getEncryptedMnemonic();
     if (encryptedMnemonic) {
       try {
-        decryptedKey.mnemonic = decryptMnemonic(encryptedMnemonic, typedPin);
+        decryptedKey.mnemonic = decryptMnemonicNip49(encryptedMnemonic, typedPin);
       } catch {
         // Mnemonic decryption failed, but we still have the key
       }
@@ -522,18 +611,20 @@ export async function unlockWithWebAuthn(): Promise<UnlockResult> {
     }
 
     // Step 4: Decrypt the private key
-    const encryptedBlob = await getEncryptedKey();
-    if (!encryptedBlob) {
+    const encryptedKey = await getEncryptedKey();
+    if (!encryptedKey) {
       return { success: false, error: 'No encrypted key found' };
     }
 
-    const decryptedKey = decryptWithKey(encryptedBlob, encryptionKeyData.key);
+    // Decrypt using NIP-49
+    const privateKeyHex = decryptPrivateKeyNip49(encryptedKey, encryptionKeyData.key);
+    const decryptedKey = privateKeyToKeyPair(privateKeyHex);
     
     // Try to decrypt mnemonic if available
     const encryptedMnemonic = await getEncryptedMnemonic();
     if (encryptedMnemonic) {
       try {
-        decryptedKey.mnemonic = decryptMnemonicWithKey(encryptedMnemonic, encryptionKeyData.key);
+        decryptedKey.mnemonic = decryptMnemonicNip49(encryptedMnemonic, encryptionKeyData.key);
       } catch {
         // Mnemonic decryption failed, but we still have the key
       }
@@ -711,29 +802,32 @@ export async function performUnlock(pin?: string): Promise<UnlockResult> {
 // ============================================================================
 
 /**
- * Store key without authentication (insecure mode)
- * The key is stored encrypted with a fixed key - provides no real security
- * but maintains the same storage format for consistency
+ * Fixed key for insecure storage - provides NO SECURITY
+ * Anyone with access to the source code can decrypt the key
  */
-/** Fixed key for insecure storage - provides NO SECURITY */
 const INSECURE_STORAGE_KEY = 'insecure-plebtap-key';
 
+/**
+ * Store key without authentication (insecure mode)
+ * Uses NIP-49 encryption with minimal scrypt iterations
+ * Provides no real security but maintains consistent storage format
+ */
 export async function storeInsecurely(
   privateKeyHex: PrivateKeyHex,
   publicKeyHex: PublicKeyHex,
   mnemonic?: Mnemonic
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    // Encrypt with the fixed key (using key-based encryption, no PIN validation)
-    const encryptedBlob = encryptWithKey(privateKeyHex, INSECURE_STORAGE_KEY);
+    // Encrypt with NIP-49 using fixed key and fast logN (no real security)
+    const ncryptsec = encryptPrivateKeyNip49(privateKeyHex, INSECURE_STORAGE_KEY, NIP49_FAST_LOGN) as Ncryptsec;
     
     // Store
-    await storeEncryptedKey(encryptedBlob, publicKeyHex);
+    await storeEncryptedKey(ncryptsec, publicKeyHex);
     
-    // Optionally encrypt and store mnemonic
+    // Always encrypt and store mnemonic if provided
     if (mnemonic) {
-      const encryptedMnemonic = encryptMnemonicWithKey(mnemonic, INSECURE_STORAGE_KEY);
-      await storeEncryptedMnemonic(encryptedMnemonic);
+      const ncryptmnem = encryptMnemonicNip49(mnemonic, INSECURE_STORAGE_KEY, NIP49_FAST_LOGN) as Ncryptmnem;
+      await storeEncryptedMnemonic(ncryptmnem);
     }
     
     // Mark as no auth (insecure)
@@ -765,18 +859,20 @@ export async function storeInsecurely(
  */
 export async function unlockInsecure(): Promise<UnlockResult> {
   try {
-    const encryptedBlob = await getEncryptedKey();
-    if (!encryptedBlob) {
+    const encryptedKey = await getEncryptedKey();
+    if (!encryptedKey) {
       return { success: false, error: 'No encrypted key found' };
     }
 
-    const decryptedKey = decryptWithKey(encryptedBlob, INSECURE_STORAGE_KEY);
+    // Decrypt using NIP-49
+    const privateKeyHex = decryptPrivateKeyNip49(encryptedKey, INSECURE_STORAGE_KEY);
+    const decryptedKey = privateKeyToKeyPair(privateKeyHex);
     
     // Try to decrypt mnemonic if available
     const encryptedMnemonic = await getEncryptedMnemonic();
     if (encryptedMnemonic) {
       try {
-        decryptedKey.mnemonic = decryptMnemonicWithKey(encryptedMnemonic, INSECURE_STORAGE_KEY);
+        decryptedKey.mnemonic = decryptMnemonicNip49(encryptedMnemonic, INSECURE_STORAGE_KEY);
       } catch {
         // Mnemonic decryption failed, but we still have the key
       }
@@ -809,8 +905,8 @@ export async function hasMnemonicStored(): Promise<boolean> {
 }
 
 /**
- * Export the mnemonic (requires unlock with PIN)
- * @param pin - User's PIN for decryption
+ * Export the mnemonic (requires unlock with PIN or WebAuthn)
+ * @param pin - User's PIN for decryption (only for PIN auth)
  * @returns The mnemonic if successful
  */
 export async function exportMnemonic(pin: string): Promise<{ success: boolean; mnemonic?: Mnemonic; error?: string }> {
@@ -820,21 +916,24 @@ export async function exportMnemonic(pin: string): Promise<{ success: boolean; m
       return { success: false, error: 'No mnemonic stored' };
     }
 
-    let mnemonic: Mnemonic;
+    let decryptionKey: string;
     
+    // Determine the decryption key based on auth method
     if (securityState.authMethod === 'pin') {
-      mnemonic = decryptMnemonic(encryptedMnemonic, pin as PIN);
+      decryptionKey = pin;
     } else if (securityState.authMethod === 'webauthn') {
-      // For WebAuthn, need to get the random key
-      const encryptionKey = await getWebAuthnEncryptionKey();
-      if (!encryptionKey) {
+      const encryptionKeyData = await getWebAuthnEncryptionKey();
+      if (!encryptionKeyData) {
         return { success: false, error: 'WebAuthn key not found' };
       }
-      mnemonic = decryptMnemonicWithKey(encryptedMnemonic, encryptionKey.key);
+      decryptionKey = encryptionKeyData.key;
     } else {
       // Insecure storage
-      mnemonic = decryptMnemonicWithKey(encryptedMnemonic, INSECURE_STORAGE_KEY);
+      decryptionKey = INSECURE_STORAGE_KEY;
     }
+    
+    // Decrypt using NIP-49
+    const mnemonic = decryptMnemonicNip49(encryptedMnemonic, decryptionKey);
 
     return { success: true, mnemonic };
   } catch (error) {

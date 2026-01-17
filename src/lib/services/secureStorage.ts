@@ -1,16 +1,16 @@
 // src/lib/services/secureStorage.ts
 // IndexedDB-based secure storage for encrypted keys and preferences
+// Uses NIP-49 encryption format exclusively
 
 import { BROWSER as browser } from 'esm-env';
 import type {
   SecureStorageSchema,
-  EncryptedKeyBlob,
-  EncryptedMnemonicBlob,
+  Ncryptsec,
+  Ncryptmnem,
   PINHash,
   StoredCredential,
   SecurityPreferences,
   PublicKeyHex,
-  Npub,
   WebAuthnEncryptionKey,
   AuthMethod,
   PinLength,
@@ -18,7 +18,8 @@ import type {
 import {
   DEFAULT_SECURITY_PREFERENCES,
   CURRENT_SCHEMA_VERSION,
-  isValidEncryptedKeyBlob,
+  isNip49EncryptedKey,
+  isNip49EncryptedMnemonic,
 } from '$lib/types/security.js';
 
 // ============================================================================
@@ -201,22 +202,23 @@ export async function updateStorage(
 // ============================================================================
 
 /**
- * Store an encrypted private key
+ * Store an encrypted private key in NIP-49 format (ncryptsec1...)
  */
 export async function storeEncryptedKey(
-  encryptedKey: EncryptedKeyBlob,
+  ncryptsec: Ncryptsec,
   publicKeyHex: PublicKeyHex
 ): Promise<void> {
   await updateStorage({
-    encryptedKey,
+    encryptedKey: ncryptsec,
     publicKeyHex,
+    schemaVersion: CURRENT_SCHEMA_VERSION,
   });
 }
 
 /**
  * Get the stored encrypted key
  */
-export async function getEncryptedKey(): Promise<EncryptedKeyBlob | null> {
+export async function getEncryptedKey(): Promise<Ncryptsec | null> {
   const storage = await readStorage();
   return storage.encryptedKey;
 }
@@ -226,7 +228,7 @@ export async function getEncryptedKey(): Promise<EncryptedKeyBlob | null> {
  */
 export async function hasEncryptedKey(): Promise<boolean> {
   const key = await getEncryptedKey();
-  return key !== null && isValidEncryptedKeyBlob(key);
+  return key !== null && isNip49EncryptedKey(key);
 }
 
 /**
@@ -242,18 +244,16 @@ export async function getPublicKey(): Promise<PublicKeyHex | null> {
 // ============================================================================
 
 /**
- * Store an encrypted mnemonic
+ * Store an encrypted mnemonic in NIP-49 format (ncryptmnem1...)
  */
-export async function storeEncryptedMnemonic(
-  encryptedMnemonic: EncryptedMnemonicBlob
-): Promise<void> {
-  await updateStorage({ encryptedMnemonic });
+export async function storeEncryptedMnemonic(ncryptmnem: Ncryptmnem): Promise<void> {
+  await updateStorage({ encryptedMnemonic: ncryptmnem });
 }
 
 /**
  * Get the stored encrypted mnemonic
  */
-export async function getEncryptedMnemonic(): Promise<EncryptedMnemonicBlob | null> {
+export async function getEncryptedMnemonic(): Promise<Ncryptmnem | null> {
   const storage = await readStorage();
   return storage.encryptedMnemonic;
 }
@@ -263,7 +263,7 @@ export async function getEncryptedMnemonic(): Promise<EncryptedMnemonicBlob | nu
  */
 export async function hasEncryptedMnemonic(): Promise<boolean> {
   const mnemonic = await getEncryptedMnemonic();
-  return mnemonic !== null;
+  return mnemonic !== null && isNip49EncryptedMnemonic(mnemonic);
 }
 
 /**
@@ -525,83 +525,6 @@ export async function deleteSecureStorageDatabase(): Promise<void> {
       resolve();
     };
   });
-}
-
-// ============================================================================
-// Device PIN Storage (for skipped PIN mode)
-// ============================================================================
-
-const DEVICE_PIN_STORE = 'device-pin';
-
-/**
- * Store device PIN in IndexedDB
- */
-export async function storeDevicePinInDb(pin: string): Promise<void> {
-  if (!browser) return;
-  
-  const db = await getDatabase();
-  const transaction = db.transaction(STORE_NAME, 'readwrite');
-  const store = transaction.objectStore(STORE_NAME);
-  
-  return new Promise((resolve, reject) => {
-    const request = store.put({
-      id: DEVICE_PIN_STORE,
-      pin,
-      createdAt: Date.now(),
-    });
-    
-    request.onerror = () => reject(new Error('Failed to store device PIN'));
-    request.onsuccess = () => resolve();
-  });
-}
-
-/**
- * Get device PIN from IndexedDB
- */
-export async function getDevicePinFromDb(): Promise<string | null> {
-  if (!browser) return null;
-  
-  try {
-    const db = await getDatabase();
-    const transaction = db.transaction(STORE_NAME, 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    
-    return new Promise((resolve, reject) => {
-      const request = store.get(DEVICE_PIN_STORE);
-      
-      request.onerror = () => resolve(null);
-      request.onsuccess = () => {
-        if (request.result?.pin) {
-          resolve(request.result.pin);
-        } else {
-          resolve(null);
-        }
-      };
-    });
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Clear device PIN from IndexedDB
- */
-export async function clearDevicePinFromDb(): Promise<void> {
-  if (!browser) return;
-  
-  try {
-    const db = await getDatabase();
-    const transaction = db.transaction(STORE_NAME, 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    
-    return new Promise((resolve) => {
-      const request = store.delete(DEVICE_PIN_STORE);
-      request.onerror = () => resolve();
-      request.onsuccess = () => resolve();
-    });
-  } catch {
-    // Ignore errors
-  }
 }
 
 // ============================================================================
