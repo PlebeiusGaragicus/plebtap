@@ -32,6 +32,7 @@
 
 	let showPrivateKey = $state(false);
 	let privateKey = $state('');
+	let privateKeyHex = $state('');
 	let npub = $state('');
 	let hasNdkPrivateKey = $state(false);
 	
@@ -43,7 +44,7 @@
 	// Dialog states
 	let showUnlockDialog = $state(false);
 	let showAuthSetup = $state(false);
-	let pendingAction = $state<'view' | 'copy' | 'view-mnemonic' | 'copy-mnemonic' | null>(null);
+	let pendingAction = $state<'view' | 'copy' | 'copy-hex' | 'view-mnemonic' | 'copy-mnemonic' | null>(null);
 
 	// Get key pair from unlocked session (for PIN setup)
 	let derivedPrivateKey = $state<PrivateKeyHex | null>(null);
@@ -85,6 +86,7 @@
 			const unlockedKey = getUnlockedKey();
 			if (unlockedKey) {
 				privateKey = unlockedKey.nsec;
+				privateKeyHex = unlockedKey.privateKeyHex;
 				if (unlockedKey.mnemonic) {
 					mnemonic = unlockedKey.mnemonic;
 				}
@@ -92,6 +94,7 @@
 		} else {
 			// Hide when locked
 			privateKey = '';
+			privateKeyHex = '';
 			mnemonic = '';
 			showPrivateKey = false;
 			showMnemonic = false;
@@ -105,6 +108,11 @@
 
 	function requestCopyPrivateKey() {
 		pendingAction = 'copy';
+		performSecureAction();
+	}
+	
+	function requestCopyPrivateKeyHex() {
+		pendingAction = 'copy-hex';
 		performSecureAction();
 	}
 	
@@ -134,7 +142,11 @@
 			showPrivateKey = !showPrivateKey;
 		} else if (pendingAction === 'copy') {
 			if (privateKey) {
-				copyToClipboard(privateKey, 'Private key');
+				copyToClipboard(privateKey, 'Private key (nsec)');
+			}
+		} else if (pendingAction === 'copy-hex') {
+			if (privateKeyHex) {
+				copyToClipboard(privateKeyHex, 'Private key (hex)');
 			}
 		} else if (pendingAction === 'view-mnemonic') {
 			showMnemonic = !showMnemonic;
@@ -151,6 +163,7 @@
 		const unlockedKey = getUnlockedKey();
 		if (unlockedKey) {
 			privateKey = unlockedKey.nsec;
+			privateKeyHex = unlockedKey.privateKeyHex;
 			if (unlockedKey.mnemonic) {
 				mnemonic = unlockedKey.mnemonic;
 			}
@@ -331,6 +344,7 @@
 						</AlertDescription>
 					</Alert>
 
+					<!-- nsec format -->
 					<div>
 						<div class="mb-1 text-xs text-muted-foreground">Private Key (nsec)</div>
 						<div class="flex">
@@ -360,6 +374,42 @@
 								size="icon"
 								class="ml-2 h-8 w-8"
 								onclick={requestCopyPrivateKey}
+							>
+								<Copy class="h-3 w-3" />
+							</Button>
+						</div>
+					</div>
+					
+					<!-- hex format -->
+					<div class="mt-2">
+						<div class="mb-1 text-xs text-muted-foreground">Private Key (hex)</div>
+						<div class="flex">
+							<code
+								class="flex-1 overflow-hidden overflow-ellipsis whitespace-nowrap rounded bg-muted p-2 text-xs"
+							>
+								{#if showPrivateKey && privateKeyHex}
+									{privateKeyHex}
+								{:else}
+									••••••••••••••••••••••••••••••••
+								{/if}
+							</code>
+							<Button
+								variant="ghost"
+								size="icon"
+								class="ml-2 h-8 w-8"
+								onclick={togglePrivateKeyVisibility}
+							>
+								{#if showPrivateKey}
+									<EyeOff class="h-3 w-3" />
+								{:else}
+									<Eye class="h-3 w-3" />
+								{/if}
+							</Button>
+							<Button
+								variant="ghost"
+								size="icon"
+								class="ml-2 h-8 w-8"
+								onclick={requestCopyPrivateKeyHex}
 							>
 								<Copy class="h-3 w-3" />
 							</Button>
@@ -421,7 +471,7 @@
 						</div>
 						
 						{#if showMnemonic && mnemonic}
-							<div class="mt-2 grid grid-cols-4 gap-1 rounded bg-muted p-2">
+							<div class="mt-2 grid grid-cols-3 gap-1 rounded bg-muted p-2">
 								{#each mnemonic.split(' ') as word, i}
 									<div class="text-xs">
 										<span class="text-muted-foreground">{i + 1}.</span> {word}

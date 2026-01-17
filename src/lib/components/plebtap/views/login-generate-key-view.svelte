@@ -79,7 +79,7 @@
 		}
 	}
 
-	// Generate with seed words - show backup flow
+	// Generate with seed phrase - show backup flow
 	function handleShowSeedWords() {
 		const entropy = wordCount === 12 ? 128 : 256;
 		mnemonic = generateMnemonic(entropy);
@@ -223,7 +223,7 @@
 	{/if}
 
 	{#if step === 'choose'}
-		<!-- Choice screen: Quick Generate vs Show Seed Words -->
+		<!-- Choice screen: Quick Generate vs Show Seed Phrase -->
 		<div class="space-y-4">
 			<!-- Quick Generate option -->
 			<button
@@ -236,15 +236,15 @@
 						<Zap class="h-5 w-5 text-foreground" />
 					</div>
 					<div class="flex-1">
-						<p class="font-medium">Generate</p>
+						<p class="font-medium">Generate Private Key</p>
 						<p class="text-sm text-muted-foreground">
-							Quick start - backup later.
+							Quick start - no mnemonic.
 						</p>
 					</div>
 				</div>
 			</button>
 
-			<!-- Show Seed Words option -->
+			<!-- Show Seed Phrase option -->
 			<button
 				class="w-full rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-muted/50"
 				onclick={handleShowSeedWords}
@@ -255,9 +255,9 @@
 						<KeySquare class="h-5 w-5 text-foreground" />
 					</div>
 					<div class="flex-1">
-						<p class="font-medium">Show Seed Words</p>
+						<p class="font-medium">Generate Seed Phrase</p>
 						<p class="text-sm text-muted-foreground">
-							Backup seed first - safer.
+							BIP-39 mnemonic with NIP-06 derivation path.
 						</p>
 					</div>
 				</div>
