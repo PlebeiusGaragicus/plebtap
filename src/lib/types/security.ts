@@ -172,6 +172,8 @@ export interface SecurityPreferences {
   failedPinAttempts: number;
   /** Timestamp of last failed attempt */
   lastFailedAttemptAt: number | null;
+  /** Auto-lock after inactivity (opt-in, default false) */
+  autoLockEnabled: boolean;
 }
 
 /**
@@ -192,6 +194,8 @@ export interface SecureStorageSchema {
   preferences: SecurityPreferences;
   /** User's public key (not sensitive, for identification) */
   publicKeyHex: PublicKeyHex | null;
+  /** User's npub (not sensitive, for display when locked) */
+  npub: Npub | null;
   /** Schema version for migrations */
   schemaVersion: number;
 }
@@ -356,6 +360,7 @@ export const DEFAULT_SECURITY_PREFERENCES: SecurityPreferences = {
   lastUnlockAt: null,
   failedPinAttempts: 0,
   lastFailedAttemptAt: null,
+  autoLockEnabled: false,
 };
 
 /**

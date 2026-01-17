@@ -12,22 +12,23 @@
 		DialogHeader,
 		DialogTitle
 	} from '$lib/components/ui/dialog/index.js';
-	import Button from '$lib/components/ui/button/button.svelte';
+	import { Button } from '$lib/components/ui/button/index.js';
 	import { Alert, AlertDescription } from '$lib/components/ui/alert/index.js';
 	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	import Lock from '@lucide/svelte/icons/lock';
 	import Fingerprint from '@lucide/svelte/icons/fingerprint';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 
-	import { securityState, unlockWithPIN, unlockWithWebAuthn, unlockInsecure } from '$lib/stores/security.svelte.js';
+	import { securityState, unlockWithPIN, unlockWithWebAuthn, unlockInsecure, getRateLimitStatus } from '$lib/stores/security.svelte.js';
 	import type { UnlockResult } from '$lib/types/security.js';
+	import { PIN_RATE_LIMIT } from '$lib/types/security.js';
 
 	// Props
 	interface Props {
 		open?: boolean;
 		title?: string;
 		description?: string;
-		onSuccess?: (result: UnlockResult) => void;
+		onSuccess?: (result: UnlockResult) => void | Promise<void>;
 		onCancel?: () => void;
 	}
 
@@ -44,6 +45,11 @@
 	let isLoading = $state(false);
 	let errorMessage = $state('');
 	let attemptCount = $state(0);
+	let attemptsRemaining = $state(PIN_RATE_LIMIT.maxAttempts);
+	let isLockedOut = $state(false);
+	let lockoutSecondsRemaining = $state(0);
+	let lockoutIntervalId: ReturnType<typeof setInterval> | null = null;
+	let pinInputContainer: HTMLDivElement | null = $state(null);
 
 	const dispatch = createEventDispatcher<{
 		success: UnlockResult;
@@ -53,6 +59,49 @@
 	// Determine what auth method to show
 	const authMethod = $derived(securityState.authMethod);
 	const pinLength = $derived(securityState.pinLength);
+	
+	// Focus the first PIN input slot
+	function focusPinInput() {
+		setTimeout(() => {
+			const firstInput = pinInputContainer?.querySelector('input');
+			firstInput?.focus();
+		}, 50);
+	}
+
+	// Check and update rate limit status
+	async function checkRateLimitStatus(showWarningIfFailed = false) {
+		const status = await getRateLimitStatus();
+		attemptsRemaining = status.attemptsRemaining;
+		isLockedOut = status.limited;
+		
+		if (status.limited && status.waitTime) {
+			lockoutSecondsRemaining = Math.ceil(status.waitTime / 1000);
+			startLockoutCountdown();
+		} else if (showWarningIfFailed && status.failedAttempts > 0) {
+			// Show warning about remaining attempts if there were previous failures
+			errorMessage = `${status.attemptsRemaining} attempt${status.attemptsRemaining !== 1 ? 's' : ''} remaining before lockout.`;
+		}
+	}
+	
+	function startLockoutCountdown() {
+		if (lockoutIntervalId) clearInterval(lockoutIntervalId);
+		
+		lockoutIntervalId = setInterval(() => {
+			lockoutSecondsRemaining--;
+			if (lockoutSecondsRemaining <= 0) {
+				isLockedOut = false;
+				if (lockoutIntervalId) clearInterval(lockoutIntervalId);
+				checkRateLimitStatus(); // Refresh status
+			}
+		}, 1000);
+	}
+	
+	function cleanupLockoutInterval() {
+		if (lockoutIntervalId) {
+			clearInterval(lockoutIntervalId);
+			lockoutIntervalId = null;
+		}
+	}
 
 	// Reset state when dialog opens
 	$effect(() => {
@@ -61,6 +110,9 @@
 			errorMessage = '';
 			isLoading = false;
 			attemptCount = 0;
+			
+			// Check rate limit status and show warning if there were previous failed attempts
+			checkRateLimitStatus(true);
 			
 			// Auto-trigger WebAuthn if that's the configured method
 			if (authMethod === 'webauthn') {
@@ -72,6 +124,9 @@
 			if (authMethod === 'none' && securityState.hasStoredKey) {
 				setTimeout(() => handleInsecureUnlock(), 100);
 			}
+		} else {
+			// Cleanup when dialog closes
+			cleanupLockoutInterval();
 		}
 	});
 
@@ -84,7 +139,8 @@
 
 			if (result.success) {
 				dispatch('success', result);
-				onSuccess?.(result);
+				// Wait for onSuccess to complete (login + wallet init)
+				await onSuccess?.(result);
 				open = false;
 			} else {
 				errorMessage = result.error || 'Failed to unlock';
@@ -97,6 +153,12 @@
 	}
 
 	async function handlePINSubmit() {
+		// Check if locked out
+		if (isLockedOut) {
+			errorMessage = `Too many failed attempts. Try again in ${lockoutSecondsRemaining} seconds.`;
+			return;
+		}
+		
 		if (pin.length !== pinLength) {
 			errorMessage = `Please enter your ${pinLength}-digit PIN`;
 			return;
@@ -110,16 +172,26 @@
 
 			if (result.success) {
 				dispatch('success', result);
-				onSuccess?.(result);
+				// Wait for onSuccess to complete (login + wallet init)
+				await onSuccess?.(result);
 				open = false;
 			} else {
-				errorMessage = result.error || 'Incorrect PIN';
+				// Update rate limit status
+				await checkRateLimitStatus();
+				
+				if (isLockedOut) {
+					errorMessage = `Too many failed attempts. Try again in ${lockoutSecondsRemaining} seconds.`;
+				} else {
+					errorMessage = `Incorrect PIN. ${attemptsRemaining} attempt${attemptsRemaining !== 1 ? 's' : ''} remaining.`;
+				}
 				attemptCount++;
 				pin = '';
+				focusPinInput();
 			}
 		} catch (error) {
 			errorMessage = error instanceof Error ? error.message : 'An error occurred';
 			pin = '';
+			focusPinInput();
 		} finally {
 			isLoading = false;
 		}
@@ -134,7 +206,8 @@
 
 			if (result.success) {
 				dispatch('success', result);
-				onSuccess?.(result);
+				// Wait for onSuccess to complete (login + wallet init)
+				await onSuccess?.(result);
 				open = false;
 			} else {
 				errorMessage = result.error || 'Biometric verification failed';
@@ -154,7 +227,7 @@
 
 	// Auto-submit when PIN is complete
 	$effect(() => {
-		if (authMethod === 'pin' && pin.length === pinLength && !isLoading) {
+		if (authMethod === 'pin' && pin.length === pinLength && !isLoading && !isLockedOut) {
 			handlePINSubmit();
 		}
 	});
@@ -206,25 +279,37 @@
 
 			{:else if authMethod === 'pin'}
 				<!-- PIN UI -->
-				<div class="flex flex-col items-center space-y-4">
-					<InputOTP
-						maxlength={pinLength}
-						bind:value={pin}
-						pattern={REGEXP_ONLY_DIGITS}
-						disabled={isLoading}
-					>
-						{#snippet children({ cells })}
-							<InputOTPGroup>
-								{#each cells as cell (cell)}
-									<InputOTPSlot {cell} />
-								{/each}
-							</InputOTPGroup>
-						{/snippet}
-					</InputOTP>
+				<div class="flex flex-col items-center space-y-4" bind:this={pinInputContainer}>
+					{#if isLockedOut}
+						<!-- Lockout display -->
+						<div class="flex flex-col items-center space-y-3 py-4">
+							<div class="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+								<Lock class="h-8 w-8 text-destructive" />
+							</div>
+							<p class="text-sm font-medium text-destructive">Too many failed attempts</p>
+							<p class="text-2xl font-mono font-bold">{Math.floor(lockoutSecondsRemaining / 60)}:{(lockoutSecondsRemaining % 60).toString().padStart(2, '0')}</p>
+							<p class="text-xs text-muted-foreground">Try again after the countdown</p>
+						</div>
+					{:else}
+						<InputOTP
+							maxlength={pinLength}
+							bind:value={pin}
+							pattern={REGEXP_ONLY_DIGITS}
+							disabled={isLoading}
+						>
+							{#snippet children({ cells })}
+								<InputOTPGroup>
+									{#each cells as cell (cell)}
+										<InputOTPSlot {cell} />
+									{/each}
+								</InputOTPGroup>
+							{/snippet}
+						</InputOTP>
 
-					<p class="text-xs text-muted-foreground">
-						Enter your {pinLength}-digit PIN
-					</p>
+						<p class="text-xs text-muted-foreground">
+							Enter your {pinLength}-digit PIN
+						</p>
+					{/if}
 				</div>
 
 			{:else if authMethod === 'none' && securityState.hasStoredKey}
@@ -255,7 +340,7 @@
 				Cancel
 			</Button>
 			
-			{#if authMethod === 'pin'}
+			{#if authMethod === 'pin' && !isLockedOut}
 				<Button onclick={handlePINSubmit} disabled={pin.length !== pinLength || isLoading}>
 					{#if isLoading}
 						<LoaderCircle class="mr-2 h-4 w-4 animate-spin" />

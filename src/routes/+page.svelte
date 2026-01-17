@@ -204,20 +204,21 @@
 		</div>
 	</div>
 
-	<!-- Real-time Status -->
-	<!-- {#if plebtap.isLoggedIn && plebtap.isReady} -->
-	{#if plebtap.isLoggedIn}
+	<!-- Real-time Status - show when has stored key -->
+	{#if securityState.hasStoredKey}
 		<div class="my-6 rounded-lg border p-4">
 			<h3 class="mb-2 text-lg font-semibold">Real-time Status</h3>
 			<div class="grid gap-2 text-sm md:grid-cols-4">
-				<p><strong>Logged In:</strong> {plebtap.isLoggedIn ? '✅' : '❌'}</p>
+				<p><strong>Has Key:</strong> {securityState.hasStoredKey ? '✅' : '❌'}</p>
+				<p><strong>Unlocked:</strong> {securityState.isUnlocked ? '✅' : '❌'}</p>
 				<p><strong>Wallet Ready:</strong> {plebtap.isReady ? '✅' : '❌'}</p>
-				<p><strong>Wallet Unlocked:</strong> {securityState.isUnlocked ? '✅' : '❌'}</p>
-				<p><strong>Auth Method:</strong> {securityState.authMethod || 'None'}</p>
+				<p><strong>Auth:</strong> {securityState.authMethod === 'none' ? 'Insecure' : securityState.authMethod.toUpperCase()}</p>
 			</div>
-			<div class="mt-2 text-xs break-all text-muted-foreground">
-				<p><strong>npub:</strong> {plebtap.npub || 'Not available'}</p>
-			</div>
+			{#if plebtap.npub || securityState.storedNpub}
+				<div class="mt-2 text-xs break-all text-muted-foreground">
+					<p><strong>npub:</strong> {plebtap.npub || securityState.storedNpub}</p>
+				</div>
+			{/if}
 		</div>
 	{/if}
 
@@ -362,13 +363,24 @@
 				</div>
 			</div>
 		</div>
-	{:else if securityState.isInitializing || securityState.hasStoredKey || plebtap.isLoggedIn}
+	{:else if securityState.hasStoredKey && !securityState.isUnlocked && securityState.authMethod !== 'none'}
+		<!-- Wallet is locked - needs unlock -->
+		<div class="rounded-lg border p-8 text-center">
+			<div class="flex items-center justify-center gap-3 mb-4">
+				<span class="text-4xl">🔒</span>
+			</div>
+			<h3 class="text-xl font-semibold mb-2">Wallet Locked</h3>
+			<p class="text-muted-foreground">
+				Click the <strong>Locked</strong> button above to unlock and enable wallet functionality.
+			</p>
+		</div>
+	{:else if securityState.isInitializing || (securityState.hasStoredKey && !plebtap.isReady)}
 		<!-- Loading / Logging in -->
 		<div class="rounded-lg border p-8 text-center">
 			<div class="flex items-center justify-center gap-3">
 				<span class="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
 				<h3 class="text-xl font-semibold">
-					{securityState.isInitializing ? 'Loading...' : 'Logging in...'}
+					{securityState.isInitializing ? 'Loading...' : 'Initializing wallet...'}
 				</h3>
 			</div>
 			<p class="mt-2 text-muted-foreground">
@@ -378,9 +390,9 @@
 	{:else}
 		<!-- No stored credentials - Login Required -->
 		<div class="rounded-lg border p-8 text-center">
-			<h3 class="mb-4 text-xl font-semibold">Login Required</h3>
+			<h3 class="mb-4 text-xl font-semibold">Get Started</h3>
 			<p class="text-muted-foreground">
-				Click the PlebTap button above to login and access the API features.
+				Click the <strong>Start</strong> button above to create or import a wallet.
 			</p>
 		</div>
 	{/if}

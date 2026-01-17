@@ -28,6 +28,8 @@ import {
   decryptMnemonicWithKey,
   hashPinForVerification,
   verifyPin,
+  privateKeyToKeyPair,
+  publicKeyToNpub,
 } from '$lib/services/crypto.js';
 import type { Mnemonic } from '$lib/types/security.js';
 import {
@@ -54,6 +56,7 @@ import {
   getAuthMethod,
   getPinLength,
   updateSecurityPreferences,
+  getStoredNpub,
 } from '$lib/services/secureStorage.js';
 import {
   isPlatformAuthenticatorAvailable,
@@ -70,7 +73,7 @@ import type { PrivateKeyHex, PublicKeyHex } from '$lib/types/security.js';
 /**
  * Current security state (including initialization status)
  */
-export const securityState = $state<SecurityState & { isInitializing: boolean }>({
+export const securityState = $state<SecurityState & { isInitializing: boolean; storedNpub: string | null; autoLockEnabled: boolean }>({
   authMethod: 'none',
   pinLength: 6,
   webauthnAvailable: false,
@@ -78,6 +81,8 @@ export const securityState = $state<SecurityState & { isInitializing: boolean }>
   isUnlocked: false,
   unlockExpiresAt: null,
   isInitializing: true,
+  storedNpub: null,
+  autoLockEnabled: false,
 });
 
 /**
@@ -113,6 +118,24 @@ export function isWalletSecured(): boolean {
   return securityState.hasStoredKey && securityState.authMethod !== 'none';
 }
 
+/**
+ * Set the wallet as unlocked with the given key
+ * Used after setup or unlock operations
+ */
+function setUnlockedState(key: DecryptedKey): void {
+  currentUnlockedKey = key;
+  securityState.isUnlocked = true;
+  securityState.unlockExpiresAt = Date.now() + UNLOCK_SESSION_DURATION;
+  
+  // Clear any existing timeout
+  if (unlockTimeoutHandle) {
+    clearTimeout(unlockTimeoutHandle);
+  }
+  
+  // Note: Session timeout is set elsewhere (in setSessionTimeout)
+  // For initial setup, we don't auto-lock immediately
+}
+
 // ============================================================================
 // Initialization
 // ============================================================================
@@ -131,10 +154,12 @@ export async function initializeSecurity(): Promise<void> {
     const webauthnAvailable = await isPlatformAuthenticatorAvailable();
     
     // Load stored state
-    const [authMethod, pinLength, hasKey] = await Promise.all([
+    const [authMethod, pinLength, hasKey, storedNpub, storage] = await Promise.all([
       getAuthMethod(),
       getPinLength(),
       hasEncryptedKey(),
+      getStoredNpub(),
+      readStorage(),
     ]);
 
     // Update state
@@ -144,6 +169,8 @@ export async function initializeSecurity(): Promise<void> {
     securityState.hasStoredKey = hasKey;
     securityState.isUnlocked = false;
     securityState.unlockExpiresAt = null;
+    securityState.storedNpub = storedNpub;
+    securityState.autoLockEnabled = storage.preferences.autoLockEnabled ?? false;
 
   } catch (error) {
     console.error('Failed to initialize security:', error);
@@ -181,8 +208,11 @@ export async function setupPINAuth(
     // Create PIN hash for verification
     const pinHash = hashPinForVerification(typedPin);
     
+    // Convert to npub for storage (available when locked)
+    const npub = publicKeyToNpub(publicKeyHex);
+    
     // Store both
-    await storeEncryptedKey(encryptedBlob, publicKeyHex);
+    await storeEncryptedKey(encryptedBlob, publicKeyHex, npub);
     await storePinHash(pinHash, pinLength);
     
     // Optionally encrypt and store mnemonic
@@ -195,6 +225,13 @@ export async function setupPINAuth(
     securityState.authMethod = 'pin';
     securityState.pinLength = pinLength;
     securityState.hasStoredKey = true;
+    
+    // Mark as unlocked immediately after setup (user just authenticated)
+    const decryptedKey = privateKeyToKeyPair(privateKeyHex);
+    if (mnemonic) {
+      (decryptedKey as DecryptedKey & { mnemonic?: Mnemonic }).mnemonic = mnemonic;
+    }
+    setUnlockedState(decryptedKey);
 
     return { success: true };
   } catch (error) {
@@ -286,8 +323,11 @@ export async function setupWebAuthnAuth(
     // Step 3: Encrypt private key with the random key (using key-based encryption)
     const encryptedBlob = encryptWithKey(privateKeyHex, randomKey);
     
+    // Convert to npub for storage (available when locked)
+    const npub = publicKeyToNpub(publicKeyHex);
+    
     // Step 4: Store everything
-    await storeEncryptedKey(encryptedBlob, publicKeyHex);
+    await storeEncryptedKey(encryptedBlob, publicKeyHex, npub);
     await storeWebAuthnCredential(storedCredential, encryptionKeyData);
     
     // Optionally encrypt and store mnemonic
@@ -299,6 +339,13 @@ export async function setupWebAuthnAuth(
     // Update state
     securityState.authMethod = 'webauthn';
     securityState.hasStoredKey = true;
+    
+    // Mark as unlocked immediately after setup (user just authenticated via biometric)
+    const decryptedKey = privateKeyToKeyPair(privateKeyHex);
+    if (mnemonic) {
+      (decryptedKey as DecryptedKey & { mnemonic?: Mnemonic }).mnemonic = mnemonic;
+    }
+    setUnlockedState(decryptedKey);
 
     return { success: true };
   } catch (error) {
@@ -344,6 +391,44 @@ async function checkRateLimit(): Promise<{ limited: boolean; waitTime?: number }
   }
 
   return { limited: false };
+}
+
+/**
+ * Get rate limit status (public function for UI)
+ */
+export async function getRateLimitStatus(): Promise<{ 
+  limited: boolean; 
+  waitTime?: number;
+  attemptsRemaining: number;
+  failedAttempts: number;
+}> {
+  const { count, lastAttemptAt } = await getFailedPinAttempts();
+  
+  if (count >= PIN_RATE_LIMIT.maxAttempts && lastAttemptAt) {
+    const timeSinceLastAttempt = Date.now() - lastAttemptAt;
+    if (timeSinceLastAttempt < PIN_RATE_LIMIT.lockoutDuration) {
+      const waitTime = PIN_RATE_LIMIT.lockoutDuration - timeSinceLastAttempt;
+      return { 
+        limited: true, 
+        waitTime,
+        attemptsRemaining: 0,
+        failedAttempts: count,
+      };
+    }
+    // Lockout period expired
+    await resetFailedPinAttempts();
+    return { 
+      limited: false, 
+      attemptsRemaining: PIN_RATE_LIMIT.maxAttempts,
+      failedAttempts: 0,
+    };
+  }
+
+  return { 
+    limited: false, 
+    attemptsRemaining: PIN_RATE_LIMIT.maxAttempts - count,
+    failedAttempts: count,
+  };
 }
 
 /**
@@ -488,15 +573,20 @@ function startUnlockSession(key: DecryptedKey): void {
   // Store the key
   currentUnlockedKey = key;
   
-  // Set session expiration
-  const expiresAt = Date.now() + UNLOCK_SESSION_DURATION;
+  // Mark as unlocked
   securityState.isUnlocked = true;
-  securityState.unlockExpiresAt = expiresAt;
 
-  // Set up auto-lock
-  unlockTimeoutHandle = setTimeout(() => {
-    lockSession();
-  }, UNLOCK_SESSION_DURATION);
+  // Only set up auto-lock if enabled
+  if (securityState.autoLockEnabled) {
+    const expiresAt = Date.now() + UNLOCK_SESSION_DURATION;
+    securityState.unlockExpiresAt = expiresAt;
+    
+    unlockTimeoutHandle = setTimeout(() => {
+      lockSession();
+    }, UNLOCK_SESSION_DURATION);
+  } else {
+    securityState.unlockExpiresAt = null;
+  }
 }
 
 /**
@@ -640,8 +730,11 @@ export async function storeInsecurely(
     // Encrypt with the fixed key (using key-based encryption, no PIN validation)
     const encryptedBlob = encryptWithKey(privateKeyHex, INSECURE_STORAGE_KEY);
     
+    // Convert to npub for storage (available when locked)
+    const npub = publicKeyToNpub(publicKeyHex);
+    
     // Store
-    await storeEncryptedKey(encryptedBlob, publicKeyHex);
+    await storeEncryptedKey(encryptedBlob, publicKeyHex, npub);
     
     // Optionally encrypt and store mnemonic
     if (mnemonic) {
@@ -655,6 +748,13 @@ export async function storeInsecurely(
     // Update state
     securityState.authMethod = 'none';
     securityState.hasStoredKey = true;
+    
+    // Mark as unlocked immediately (insecure = always unlocked)
+    const decryptedKey = privateKeyToKeyPair(privateKeyHex);
+    if (mnemonic) {
+      (decryptedKey as DecryptedKey & { mnemonic?: Mnemonic }).mnemonic = mnemonic;
+    }
+    setUnlockedState(decryptedKey);
 
     return { success: true };
   } catch (error) {

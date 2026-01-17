@@ -10,6 +10,7 @@ import type {
   StoredCredential,
   SecurityPreferences,
   PublicKeyHex,
+  Npub,
   WebAuthnEncryptionKey,
   AuthMethod,
   PinLength,
@@ -93,6 +94,7 @@ function createDefaultSchema(): SecureStorageSchema {
     webauthnEncryptionKey: null,
     preferences: { ...DEFAULT_SECURITY_PREFERENCES },
     publicKeyHex: null,
+    npub: null,
     schemaVersion: CURRENT_SCHEMA_VERSION,
   };
 }
@@ -204,11 +206,13 @@ export async function updateStorage(
  */
 export async function storeEncryptedKey(
   encryptedKey: EncryptedKeyBlob,
-  publicKeyHex: PublicKeyHex
+  publicKeyHex: PublicKeyHex,
+  npub?: Npub
 ): Promise<void> {
   await updateStorage({
     encryptedKey,
     publicKeyHex,
+    npub: npub ?? null,
   });
 }
 
@@ -234,6 +238,14 @@ export async function hasEncryptedKey(): Promise<boolean> {
 export async function getPublicKey(): Promise<PublicKeyHex | null> {
   const storage = await readStorage();
   return storage.publicKeyHex;
+}
+
+/**
+ * Get the stored npub (available even when locked)
+ */
+export async function getStoredNpub(): Promise<Npub | null> {
+  const storage = await readStorage();
+  return storage.npub;
 }
 
 // ============================================================================

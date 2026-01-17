@@ -4,6 +4,7 @@
 		initNavigation,
 		isUserMenuOpen,
 		openMenu,
+		navigateTo,
 	} from '$lib/stores/navigation.js';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { Popover, PopoverTrigger, PopoverContent }  from '$lib/components/ui/popover/index.js';
@@ -55,48 +56,56 @@
 				await loginWithDecryptedKey(result.key.nsec);
 				// Initialize wallet after successful unlock
 				await initWallet();
+				// Navigate to main view after successful unlock
+				navigateTo('main');
 			} catch (error) {
 				autoLoginError = error instanceof Error ? error.message : 'Login failed';
 			}
 		}
 	}
 	
-	function handleTriggerClick(event: MouseEvent) {
-		// If locked, show unlock dialog instead of opening the menu
-		if (locked) {
-			event.preventDefault();
-			event.stopPropagation();
-			showUnlockDialog = true;
-		}
+	function handleTriggerClick() {
+		// Show unlock dialog (only called when locked)
+		showUnlockDialog = true;
 	}
 </script>
 
 {#if isDesktop}
 	<div class="relative">
-		<Popover bind:open={$isUserMenuOpen}>
+		{#if locked}
+			<!-- When locked, just show the trigger with click handler for unlock dialog -->
 			<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-			<div onclick={handleTriggerClick}>
+			<div onclick={handleTriggerClick} class="cursor-pointer">
+				<PlebtapTrigger />
+			</div>
+		{:else}
+			<Popover bind:open={$isUserMenuOpen}>
 				<PopoverTrigger>
 					<PlebtapTrigger />
 				</PopoverTrigger>
-			</div>
-			<PopoverContent align="end" class="w-80 overflow-hidden p-0">
-				<ViewRouter {isDesktop} />
-			</PopoverContent>
-		</Popover>
+				<PopoverContent align="end" class="w-80 overflow-hidden p-0">
+					<ViewRouter {isDesktop} />
+				</PopoverContent>
+			</Popover>
+		{/if}
 	</div>
 {:else}
-	<Drawer bind:open={$isUserMenuOpen} shouldScaleBackground>
+	{#if locked}
+		<!-- When locked, just show the trigger with click handler for unlock dialog -->
 		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-		<div onclick={handleTriggerClick}>
+		<div onclick={handleTriggerClick} class="cursor-pointer">
+			<PlebtapTrigger />
+		</div>
+	{:else}
+		<Drawer bind:open={$isUserMenuOpen} shouldScaleBackground>
 			<DrawerTrigger>
 				<PlebtapTrigger />
 			</DrawerTrigger>
-		</div>
-		<DrawerContent class="pt-0">
-			<ViewRouter {isDesktop} />
-		</DrawerContent>
-	</Drawer>
+			<DrawerContent class="pt-0">
+				<ViewRouter {isDesktop} />
+			</DrawerContent>
+		</Drawer>
+	{/if}
 {/if}
 
 <!-- Unlock Dialog for locked wallet -->
