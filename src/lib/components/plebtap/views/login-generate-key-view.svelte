@@ -24,7 +24,6 @@
 		privateKeyToNsec,
 		privateKeyToPublicKey
 	} from '$lib/services/crypto.js';
-	import { initializeSecurity } from '$lib/stores/security.svelte.js';
 	import { AuthSetupDialog } from '$lib/components/plebtap/dialogs/index.js';
 	import type { Mnemonic, PrivateKeyHex, PublicKeyHex } from '$lib/types/security.js';
 
@@ -156,8 +155,9 @@
 			// Convert to nsec for login
 			const nsec = privateKeyToNsec(derivedPrivateKey);
 			
-			// Initialize security state
-			await initializeSecurity();
+			// Note: We don't call initializeSecurity() here because the auth setup
+			// functions (setupPINAuth, setupWebAuthnAuth, storeInsecurely) already
+			// set the correct security state including isUnlocked = true
 
 			// Login with the derived key
 			await login({
@@ -238,7 +238,7 @@
 					<div class="flex-1">
 						<p class="font-medium">Generate</p>
 						<p class="text-sm text-muted-foreground">
-							Quick start - no seed backup
+							Quick start - backup later.
 						</p>
 					</div>
 				</div>
@@ -257,7 +257,7 @@
 					<div class="flex-1">
 						<p class="font-medium">Show Seed Words</p>
 						<p class="text-sm text-muted-foreground">
-							Recommended - full backup
+							Backup seed first - safer.
 						</p>
 					</div>
 				</div>

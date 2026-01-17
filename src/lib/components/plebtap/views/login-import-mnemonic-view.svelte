@@ -16,7 +16,6 @@
 		deriveKeyPair,
 		privateKeyToNsec
 	} from '$lib/services/crypto.js';
-	import { initializeSecurity } from '$lib/stores/security.svelte.js';
 	import { AuthSetupDialog } from '$lib/components/plebtap/dialogs/index.js';
 	import type { Mnemonic, PrivateKeyHex, PublicKeyHex } from '$lib/types/security.js';
 
@@ -90,8 +89,9 @@
 			// Convert to nsec for login
 			const nsec = privateKeyToNsec(derivedPrivateKey);
 			
-			// Initialize security state
-			await initializeSecurity();
+			// Note: We don't call initializeSecurity() here because the auth setup
+			// functions (setupPINAuth, setupWebAuthnAuth, storeInsecurely) already
+			// set the correct security state including isUnlocked = true
 
 			// Login with the derived key
 			await login({
@@ -128,7 +128,6 @@
 		<AlertTitle>Secure Import</AlertTitle>
 		<AlertDescription class="text-xs">
 			Your seed phrase will be used to derive your Nostr keys using NIP-06 derivation.
-			The phrase will be encrypted and stored for recovery.
 		</AlertDescription>
 	</Alert>
 

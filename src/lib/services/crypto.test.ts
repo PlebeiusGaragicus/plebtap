@@ -16,13 +16,18 @@ import {
   deriveKeyPair,
   privateKeyToKeyPair,
   nsecToKeyPair,
-  encryptPrivateKey,
-  decryptPrivateKey,
   hashPinForVerification,
   verifyPin,
   generateRandomPrivateKey,
   clearSensitiveData,
 } from './crypto.js';
+import {
+  encryptPrivateKeyNip49,
+  decryptPrivateKeyNip49,
+  encryptMnemonicNip49,
+  decryptMnemonicNip49,
+  NIP49_DEFAULT_LOGN,
+} from '$lib/utils/nip49.js';
 import type { Mnemonic, Nsec, PrivateKeyHex, PIN } from '$lib/types/security.js';
 
 // ============================================================================
@@ -245,52 +250,62 @@ describe('Key Pair Derivation', () => {
 });
 
 // ============================================================================
-// Encryption/Decryption Tests
+// NIP-49 Encryption/Decryption Tests
 // ============================================================================
 
-describe('Private Key Encryption', () => {
+describe('NIP-49 Private Key Encryption', () => {
   const testPrivateKey = NIP06_TEST_VECTORS[0].privateKeyHex;
-  const testPIN = '123456' as PIN;
+  const testPassword = '123456';
 
-  it('should encrypt and decrypt private key with correct PIN', () => {
-    const encrypted = encryptPrivateKey(testPrivateKey, testPIN);
-    const decrypted = decryptPrivateKey(encrypted, testPIN);
+  it('should encrypt and decrypt private key with correct password', () => {
+    const encrypted = encryptPrivateKeyNip49(testPrivateKey, testPassword, NIP49_DEFAULT_LOGN);
+    const decrypted = decryptPrivateKeyNip49(encrypted, testPassword);
     
-    expect(decrypted.privateKeyHex).toBe(testPrivateKey);
-    expect(decrypted.nsec).toBe(NIP06_TEST_VECTORS[0].nsec);
+    expect(decrypted).toBe(testPrivateKey);
   });
 
-  it('should fail decryption with wrong PIN', () => {
-    const encrypted = encryptPrivateKey(testPrivateKey, testPIN);
-    const wrongPIN = '654321' as PIN;
+  it('should fail decryption with wrong password', () => {
+    const encrypted = encryptPrivateKeyNip49(testPrivateKey, testPassword, NIP49_DEFAULT_LOGN);
+    const wrongPassword = '654321';
     
-    expect(() => decryptPrivateKey(encrypted, wrongPIN)).toThrow('Incorrect PIN or corrupted data');
+    expect(() => decryptPrivateKeyNip49(encrypted, wrongPassword)).toThrow();
   });
 
-  it('should produce different ciphertext for same key and PIN', () => {
-    const encrypted1 = encryptPrivateKey(testPrivateKey, testPIN);
-    const encrypted2 = encryptPrivateKey(testPrivateKey, testPIN);
+  it('should produce different ciphertext for same key and password', () => {
+    const encrypted1 = encryptPrivateKeyNip49(testPrivateKey, testPassword, NIP49_DEFAULT_LOGN);
+    const encrypted2 = encryptPrivateKeyNip49(testPrivateKey, testPassword, NIP49_DEFAULT_LOGN);
     
-    // Salt and IV should be different
-    expect(encrypted1.salt).not.toBe(encrypted2.salt);
-    expect(encrypted1.iv).not.toBe(encrypted2.iv);
-    expect(encrypted1.ciphertext).not.toBe(encrypted2.ciphertext);
+    // Should be different due to random salt and nonce
+    expect(encrypted1).not.toBe(encrypted2);
   });
 
-  it('should include correct metadata in encrypted blob', () => {
-    const encrypted = encryptPrivateKey(testPrivateKey, testPIN);
+  it('should produce ncryptsec1... format', () => {
+    const encrypted = encryptPrivateKeyNip49(testPrivateKey, testPassword, NIP49_DEFAULT_LOGN);
+    expect(encrypted).toMatch(/^ncryptsec1/);
+  });
+});
+
+describe('NIP-49 Mnemonic Encryption', () => {
+  const testMnemonic = NIP06_TEST_VECTORS[0].mnemonic;
+  const testPassword = 'testpassword';
+
+  it('should encrypt and decrypt mnemonic with correct password', () => {
+    const encrypted = encryptMnemonicNip49(testMnemonic, testPassword, NIP49_DEFAULT_LOGN);
+    const decrypted = decryptMnemonicNip49(encrypted, testPassword);
     
-    expect(encrypted.version).toBe('plebtap-v1');
-    expect(encrypted.algorithm).toBe('aes-256-gcm');
-    expect(encrypted.kdfParams.algorithm).toBe('pbkdf2');
-    expect(encrypted.kdfParams.iterations).toBeGreaterThan(0);
-    expect(encrypted.createdAt).toBeLessThanOrEqual(Date.now());
+    expect(decrypted).toBe(testMnemonic);
   });
 
-  it('should reject invalid PIN format', () => {
-    expect(() => encryptPrivateKey(testPrivateKey, 'abc' as PIN)).toThrow('Invalid PIN format');
-    expect(() => encryptPrivateKey(testPrivateKey, '123' as PIN)).toThrow('Invalid PIN format');
-    expect(() => encryptPrivateKey(testPrivateKey, '123456789' as PIN)).toThrow('Invalid PIN format');
+  it('should fail decryption with wrong password', () => {
+    const encrypted = encryptMnemonicNip49(testMnemonic, testPassword, NIP49_DEFAULT_LOGN);
+    const wrongPassword = 'wrongpassword';
+    
+    expect(() => decryptMnemonicNip49(encrypted, wrongPassword)).toThrow();
+  });
+
+  it('should produce ncryptmnem1... format', () => {
+    const encrypted = encryptMnemonicNip49(testMnemonic, testPassword, NIP49_DEFAULT_LOGN);
+    expect(encrypted).toMatch(/^ncryptmnem1/);
   });
 });
 
@@ -370,14 +385,6 @@ describe('Edge Cases', () => {
     const key2 = mnemonicToPrivateKey(mnemonic);
     
     expect(key1).toBe(key2);
-  });
-
-  it('should handle Unicode PIN normalization', () => {
-    // These should normalize to the same value
-    const pin1 = '１２３４５６' as PIN; // Full-width digits (should fail PIN format check)
-    
-    // We expect the full-width PIN to be rejected since it's not 4-8 ASCII digits
-    expect(() => encryptPrivateKey(NIP06_TEST_VECTORS[0].privateKeyHex, pin1)).toThrow('Invalid PIN format');
   });
 
   it('should handle mnemonic with mixed case and extra spaces', () => {

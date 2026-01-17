@@ -14,20 +14,19 @@
 	import Key from '@lucide/svelte/icons/key';
 	import Lock from '@lucide/svelte/icons/lock';
 	import ShieldCheck from '@lucide/svelte/icons/shield-check';
+	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	import Button from '$lib/components/ui/button/button.svelte';
 
 	import {
 		securityState,
 		canPerformSensitiveOperation,
-		hasAuthSetup,
-		unlockWithPIN,
-		unlockWithWebAuthn,
-		lockSession,
 		getUnlockedKey,
-		hasMnemonicStored
+		hasMnemonicStored,
+		rotateWebAuthnCredential
 	} from '$lib/stores/security.svelte.js';
 	import KeySquare from '@lucide/svelte/icons/key-square';
-	import { UnlockDialog, SecurityWarningDialog, AuthSetupDialog } from '$lib/components/plebtap/dialogs/index.js';
+	import { UnlockDialog, AuthSetupDialog } from '$lib/components/plebtap/dialogs/index.js';
 	import type { PrivateKeyHex, PublicKeyHex } from '$lib/types/security.js';
 	import { privateKeyToNsec, privateKeyToPublicKey, publicKeyToNpub } from '$lib/services/crypto.js';
 
@@ -43,13 +42,16 @@
 
 	// Dialog states
 	let showUnlockDialog = $state(false);
-	let showSecurityWarning = $state(false);
 	let showAuthSetup = $state(false);
 	let pendingAction = $state<'view' | 'copy' | 'view-mnemonic' | 'copy-mnemonic' | null>(null);
 
 	// Get key pair from unlocked session (for PIN setup)
 	let derivedPrivateKey = $state<PrivateKeyHex | null>(null);
 	let derivedPublicKey = $state<PublicKeyHex | null>(null);
+	
+	// WebAuthn rotation state
+	let isRotatingCredential = $state(false);
+	let rotationError = $state('');
 
 	// Fetch the pubkey from current user
 	$effect(() => {
@@ -117,22 +119,13 @@
 	}
 
 	function performSecureAction() {
-		// If no security is set up, show warning
-		if (!hasAuthSetup()) {
-			// If they have a private key in NDK but no auth, show warning
-			if (hasNdkPrivateKey) {
-				showSecurityWarning = true;
-			}
-			return;
-		}
-
-		// If already unlocked, perform action directly
+		// If can perform sensitive operation (unlocked or no auth required), execute directly
 		if (canPerformSensitiveOperation()) {
 			executeAction();
 			return;
 		}
 
-		// Show unlock dialog
+		// Show unlock dialog for secured wallets
 		showUnlockDialog = true;
 	}
 
@@ -163,17 +156,6 @@
 			}
 		}
 		executeAction();
-	}
-
-	function handleSecurityWarningProceed() {
-		// User accepted the risk, show the key from NDK directly
-		if ($ndkInstance && $ndkInstance.signer && 'privateKey' in $ndkInstance.signer) {
-			const key = ($ndkInstance.signer as { privateKey?: string }).privateKey;
-			if (key) {
-				privateKey = key;
-				executeAction();
-			}
-		}
 	}
 
 	async function handleSetupAuth() {
@@ -218,6 +200,24 @@
 		derivedPrivateKey = null;
 		derivedPublicKey = null;
 	}
+	
+	async function handleRotateWebAuthn() {
+		if (isRotatingCredential) return;
+		
+		isRotatingCredential = true;
+		rotationError = '';
+		
+		try {
+			const result = await rotateWebAuthnCredential();
+			if (!result.success) {
+				rotationError = result.error || 'Failed to rotate credential';
+			}
+		} catch (error) {
+			rotationError = error instanceof Error ? error.message : 'Rotation failed';
+		} finally {
+			isRotatingCredential = false;
+		}
+	}
 
 	function togglePrivateKeyVisibility() {
 		if (showPrivateKey) {
@@ -257,9 +257,33 @@
 					<span>Protected with {securityState.pinLength}-digit PIN</span>
 				</div>
 			{:else if securityState.authMethod === 'webauthn'}
-				<div class="flex items-center gap-2 text-xs text-green-600">
-					<ShieldCheck class="h-3 w-3" />
-					<span>Protected with Biometrics</span>
+				<div class="space-y-2">
+					<div class="flex items-center justify-between">
+						<div class="flex items-center gap-2 text-xs text-green-600">
+							<ShieldCheck class="h-3 w-3" />
+							<span>Protected with Biometrics</span>
+						</div>
+						<Button
+							variant="ghost"
+							size="sm"
+							class="h-7 px-2 text-xs"
+							disabled={isRotatingCredential}
+							onclick={handleRotateWebAuthn}
+						>
+							{#if isRotatingCredential}
+								<LoaderCircle class="mr-1 h-3 w-3 animate-spin" />
+								Rotating...
+							{:else}
+								<RefreshCw class="mr-1 h-3 w-3" />
+								Re-register Biometrics
+							{/if}
+						</Button>
+					</div>
+					{#if rotationError}
+						<Alert variant="destructive" class="py-2">
+							<AlertDescription class="text-xs">{rotationError}</AlertDescription>
+						</Alert>
+					{/if}
 				</div>
 			{:else if securityState.hasStoredKey || hasNdkPrivateKey}
 				<!-- Insecure storage - offer to secure -->
@@ -418,17 +442,6 @@
 	title="Unlock Wallet"
 	description="Authenticate to access your private key"
 	onSuccess={handleUnlockSuccess}
-	onCancel={() => (pendingAction = null)}
-/>
-
-<!-- Security Warning Dialog -->
-<SecurityWarningDialog
-	bind:open={showSecurityWarning}
-	title="Unprotected Private Key"
-	description="Your private key is not protected. Anyone with access to this device can view and copy your key."
-	showSetupPIN={true}
-	onProceed={handleSecurityWarningProceed}
-	onSetupPIN={handleSetupAuth}
 	onCancel={() => (pendingAction = null)}
 />
 
