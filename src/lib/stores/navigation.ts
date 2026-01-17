@@ -20,6 +20,12 @@ export type ViewName =
   | 'receive'
   | 'send'
   | 'settings'
+  | 'settings-link-device'
+  | 'settings-wallet-sync'
+  | 'settings-mint-management'
+  | 'settings-relay-management'
+  | 'settings-nostr-keys'
+  | 'settings-sign-out'
   | 'transaction-history'
   | 'transaction-details'
   | 'qr-scanner';
@@ -37,6 +43,12 @@ const viewHierarchy: Record<ViewName, number> = {
   'receive': 3,
   'send': 3,
   'settings': 3,
+  'settings-link-device': 4,
+  'settings-wallet-sync': 4,
+  'settings-mint-management': 4,
+  'settings-relay-management': 4,
+  'settings-nostr-keys': 4,
+  'settings-sign-out': 4,
   'transaction-history': 3,
   'transaction-details': 4,
   'qr-scanner': 4
