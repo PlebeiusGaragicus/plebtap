@@ -12,17 +12,26 @@
 	import ArrowDownRight from '@lucide/svelte/icons/arrow-down-right';
 	import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
 	import Clock from '@lucide/svelte/icons/clock';
+	import Copy from '@lucide/svelte/icons/copy';
 	import Settings from '@lucide/svelte/icons/settings';
-    import ScanQrCode from '@lucide/svelte/icons/scan-qr-code';
+	import ScanQrCode from '@lucide/svelte/icons/scan-qr-code';
+
+	import { copyToClipboard } from '$lib/utils/clipboard.js';
 </script>
 
 <ViewContainer className="space-y-4 p-4">
 	<!-- Top Header with npub and action buttons -->
 	<div class="flex items-center justify-between">
-		<!-- User npub abbreviated -->
-		<p class="text-sm font-medium" title={$currentUser?.npub}>
-			{$currentUser?.npub.slice(0, 8)}...{$currentUser?.npub.slice(-4)}
-		</p>
+		<!-- User npub abbreviated - clickable to copy -->
+		<button
+			type="button"
+			class="flex items-center gap-1.5 rounded-md px-2 py-1 text-sm font-medium transition-colors hover:bg-muted/50 active:bg-muted"
+			title="Click to copy npub"
+			onclick={() => $currentUser?.npub && copyToClipboard($currentUser.npub, 'npub')}
+		>
+			<span>{$currentUser?.npub.slice(0, 8)}...{$currentUser?.npub.slice(-4)}</span>
+			<Copy class="h-3 w-3 text-muted-foreground/50" />
+		</button>
 		<!-- Action buttons -->
 		<div class="flex space-x-1">
 			<Button

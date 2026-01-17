@@ -238,7 +238,7 @@
 					<div class="flex-1">
 						<p class="font-medium">Generate Private Key</p>
 						<p class="text-sm text-muted-foreground">
-							Quick start - no mnemonic.
+							Single keypair - no mnemonic.
 						</p>
 					</div>
 				</div>
