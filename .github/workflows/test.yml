@@ -2,14 +2,14 @@ name: PlebTap Tests
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'plebtap/**'
-      - '.github/workflows/test.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'plebtap/**'
+  #   branches: [main]
+  #   paths:
+  #     - 'plebtap/**'
+  #     - '.github/workflows/test.yml'
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - 'plebtap/**'
   workflow_dispatch:
 
 defaults:
