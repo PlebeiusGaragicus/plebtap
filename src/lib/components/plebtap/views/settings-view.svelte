@@ -1,24 +1,24 @@
 <!-- src/lib/components/nostr/NostrSettingsView.svelte -->
 <script lang="ts">
 	import { mode, setMode } from 'mode-watcher';
-	import { navigateTo } from '$lib/stores/navigation.js'
+	import { navigateTo } from '$lib/stores/navigation.js';
 
-	import { Accordion }  from '$lib/components/ui/accordion/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
-    
-	import ViewContainer from './view-container.svelte';
-	import RelayManagement from '../settings/relay-management.svelte';
-	import MintManagement from '../settings/mint-management.svelte';
-	import NostrKeys from '../settings/nostr-keys.svelte';
-	import SignOutButton from '../settings/sign-out-button.svelte';
-	import LinkDevices from '../settings/link-devices.svelte';
 
-    import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-    import Moon from '@lucide/svelte/icons/moon';
-    import Sun from '@lucide/svelte/icons/sun';
-	import SyncManagement from '../negentropy/sync-management.svelte';
+	import ViewContainer from './view-container.svelte';
+
+	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import Moon from '@lucide/svelte/icons/moon';
+	import Sun from '@lucide/svelte/icons/sun';
+	import MonitorSmartphone from '@lucide/svelte/icons/monitor-smartphone';
+	import Database from '@lucide/svelte/icons/database';
+	import Banknote from '@lucide/svelte/icons/banknote';
+	import Router from '@lucide/svelte/icons/router';
+	import Key from '@lucide/svelte/icons/key';
+	import LogOut from '@lucide/svelte/icons/log-out';
 
 	function toggleTheme() {
 		if (mode.current === 'dark') {
@@ -41,7 +41,7 @@
 		<!-- Settings content -->
 		<div class="max-h-[60vh] px-2 md:max-h-[50vh]">
 			<!-- Theme toggle -->
-			<div class="flex items-center justify-between border-b pb-4">
+			<div class="flex items-center justify-between border-b py-4">
 				<div class="flex items-center space-x-2">
 					{#if mode.current === 'dark'}
 						<Moon />
@@ -53,18 +53,83 @@
 				<Switch checked={mode.current === 'dark'} onCheckedChange={toggleTheme} />
 			</div>
 
-			<Accordion type="multiple" class="">
-				<LinkDevices />
-				<SyncManagement />
-				<MintManagement />
-				<RelayManagement />
-				<NostrKeys />
-			</Accordion>
+			<!-- Link New Device -->
+			<button
+				type="button"
+				class="flex w-full items-center justify-between border-b py-4 transition-colors hover:bg-muted/50"
+				onclick={() => navigateTo('settings-link-device')}
+			>
+				<div class="flex items-center gap-2">
+					<MonitorSmartphone class="h-5 w-5" />
+					<span>Link New Device</span>
+				</div>
+				<ChevronRight class="h-4 w-4 text-muted-foreground" />
+			</button>
 
-			<!-- Logout button - now using the SignOutButton component -->
-			<div class="mt-2 w-full pt-4">
-				<SignOutButton />
-			</div>
+			<!-- Wallet Sync -->
+			<button
+				type="button"
+				class="flex w-full items-center justify-between border-b py-4 transition-colors hover:bg-muted/50"
+				onclick={() => navigateTo('settings-wallet-sync')}
+			>
+				<div class="flex items-center gap-2">
+					<Database class="h-5 w-5" />
+					<span>Wallet Sync</span>
+				</div>
+				<ChevronRight class="h-4 w-4 text-muted-foreground" />
+			</button>
+
+			<!-- Mint Management -->
+			<button
+				type="button"
+				class="flex w-full items-center justify-between border-b py-4 transition-colors hover:bg-muted/50"
+				onclick={() => navigateTo('settings-mint-management')}
+			>
+				<div class="flex items-center gap-2">
+					<Banknote class="h-5 w-5" />
+					<span>Mint Management</span>
+				</div>
+				<ChevronRight class="h-4 w-4 text-muted-foreground" />
+			</button>
+
+			<!-- Relay Management -->
+			<button
+				type="button"
+				class="flex w-full items-center justify-between border-b py-4 transition-colors hover:bg-muted/50"
+				onclick={() => navigateTo('settings-relay-management')}
+			>
+				<div class="flex items-center gap-2">
+					<Router class="h-5 w-5" />
+					<span>Relay Management</span>
+				</div>
+				<ChevronRight class="h-4 w-4 text-muted-foreground" />
+			</button>
+
+			<!-- Nostr Keys -->
+			<button
+				type="button"
+				class="flex w-full items-center justify-between border-b py-4 transition-colors hover:bg-muted/50"
+				onclick={() => navigateTo('settings-nostr-keys')}
+			>
+				<div class="flex items-center gap-2">
+					<Key class="h-5 w-5" />
+					<span>Nostr Keys</span>
+				</div>
+				<ChevronRight class="h-4 w-4 text-muted-foreground" />
+			</button>
+
+			<!-- Sign Out -->
+			<button
+				type="button"
+				class="flex w-full items-center justify-between py-4 transition-colors hover:bg-muted/50"
+				onclick={() => navigateTo('settings-sign-out')}
+			>
+				<div class="flex items-center gap-2 text-destructive">
+					<LogOut class="h-5 w-5" />
+					<span>Sign Out</span>
+				</div>
+				<ChevronRight class="h-4 w-4 text-muted-foreground" />
+			</button>
 		</div>
 	</ScrollArea>
 </ViewContainer>

@@ -13,6 +13,12 @@
 	import ScannerView from './scanner-view.svelte';
 	import SendView from './send-view.svelte';
 	import SettingsView from './settings-view.svelte';
+	import SettingsLinkDeviceView from './settings-link-device-view.svelte';
+	import SettingsWalletSyncView from './settings-wallet-sync-view.svelte';
+	import SettingsMintManagementView from './settings-mint-management-view.svelte';
+	import SettingsRelayManagementView from './settings-relay-management-view.svelte';
+	import SettingsNostrKeysView from './settings-nostr-keys-view.svelte';
+	import SettingsSignOutView from './settings-sign-out-view.svelte';
 	import TransactionDetailsView from './transaction-details-view.svelte';
 	import TransactionHistoryView from './transaction-history-view.svelte';
 	import OnboardingView from './onboarding-view.svelte';
@@ -40,6 +46,12 @@
 		'transaction-history': TransactionHistoryView,
 		'transaction-details': TransactionDetailsView,
 		'settings': SettingsView,
+		'settings-link-device': SettingsLinkDeviceView,
+		'settings-wallet-sync': SettingsWalletSyncView,
+		'settings-mint-management': SettingsMintManagementView,
+		'settings-relay-management': SettingsRelayManagementView,
+		'settings-nostr-keys': SettingsNostrKeysView,
+		'settings-sign-out': SettingsSignOutView,
 		'qr-scanner': ScannerView
 	};
 </script>
