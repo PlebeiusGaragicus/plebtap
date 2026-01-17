@@ -1,6 +1,6 @@
 <!-- src/lib/components/settings/SignOutButton.svelte -->
 <script lang="ts">
-	import { navigateTo } from '$lib/stores/navigation.js';
+	import { isUserMenuOpen } from '$lib/stores/navigation.js';
 	import { logout } from '$lib/services/logout.js';
 
 	import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '$lib/components/ui/dialog/index.js';
@@ -12,24 +12,41 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
 
-	export let variant: 'outline' | 'default' | 'destructive' = 'outline';
-	export let size: 'sm' | 'default' | 'lg' | 'icon' = 'sm';
-	export let className = 'w-full justify-start text-destructive hover:text-destructive';
+	interface Props {
+		variant?: 'outline' | 'default' | 'destructive';
+		size?: 'sm' | 'default' | 'lg' | 'icon';
+		className?: string;
+	}
+
+	let {
+		variant = 'outline',
+		size = 'sm',
+		className = 'w-full justify-start text-destructive hover:text-destructive'
+	}: Props = $props();
+
+	// Dialog state
+	let dialogOpen = $state(false);
 
 	// Track clear database option
-	let clearDatabase = true;
+	let clearDatabase = $state(true);
 
 	// Handle the logout confirmation
 	async function handleConfirmLogout() {
+		// Close the dialog first
+		dialogOpen = false;
+		
+		// Close the popover/drawer menu
+		isUserMenuOpen.set(false);
+
 		// Call the centralized logout function
 		await logout({ clearDatabase });
 
-		// Navigate to login view
-		navigateTo('login');
+		// Force page refresh to ensure clean state
+		window.location.reload();
 	}
 </script>
 
-<Dialog>
+<Dialog bind:open={dialogOpen}>
 	<DialogTrigger>
 		<Button {variant} {size} class={className}>
 			<LogOut class="mr-2 h-4 w-4" />

@@ -227,13 +227,13 @@
 		<div class="space-y-4">
 			<!-- Quick Generate option -->
 			<button
-				class="w-full rounded-lg border-2 p-4 text-left transition-colors hover:border-primary hover:bg-muted/50"
+				class="w-full rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-muted/50"
 				onclick={handleQuickGenerate}
 				disabled={isLoading}
 			>
 				<div class="flex items-start gap-3">
-					<div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-						<Zap class="h-5 w-5 text-primary" />
+					<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+						<Zap class="h-5 w-5 text-foreground" />
 					</div>
 					<div class="flex-1">
 						<p class="font-medium">Generate</p>
@@ -246,13 +246,13 @@
 
 			<!-- Show Seed Words option -->
 			<button
-				class="w-full rounded-lg border-2 p-4 text-left transition-colors hover:border-primary hover:bg-muted/50"
+				class="w-full rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-muted/50"
 				onclick={handleShowSeedWords}
 				disabled={isLoading}
 			>
 				<div class="flex items-start gap-3">
-					<div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-						<KeySquare class="h-5 w-5 text-primary" />
+					<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+						<KeySquare class="h-5 w-5 text-foreground" />
 					</div>
 					<div class="flex-1">
 						<p class="font-medium">Show Seed Words</p>
@@ -434,6 +434,10 @@
 			{#if isLoading}
 				<LoaderCircle class="h-12 w-12 animate-spin text-primary" />
 				<p class="text-sm font-medium">Setting up your account...</p>
+			{:else if showAuthSetup}
+				<!-- Show waiting state while auth dialog is open -->
+				<LoaderCircle class="h-12 w-12 animate-spin text-primary" />
+				<p class="text-sm font-medium">Complete security setup...</p>
 			{:else}
 				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
 					<Check class="h-6 w-6 text-green-600" />
