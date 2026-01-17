@@ -79,7 +79,7 @@ export async function logout(
     }
 
     // 4. Use the Nostr logout function to clean up NDK and stored keys
-    nostrLogout();
+    await nostrLogout();
 
     d.log('Logout complete');
   } catch (error) {

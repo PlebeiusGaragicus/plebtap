@@ -13,7 +13,7 @@
 		DialogTitle
 	} from '$lib/components/ui/dialog/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import { Alert, AlertDescription, AlertTitle } from '$lib/components/ui/alert/index.js';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert/index.js';
 	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 	import ShieldCheck from '@lucide/svelte/icons/shield-check';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
@@ -232,7 +232,7 @@
 </script>
 
 <Dialog bind:open>
-	<DialogContent class="sm:max-w-md" interactOutsideBehavior="ignore">
+	<DialogContent class="border-border bg-background sm:max-w-md" interactOutsideBehavior="ignore" showCloseButton={false}>
 		<DialogHeader>
 			<DialogTitle class="flex items-center gap-2">
 				<ShieldCheck class="h-5 w-5" />
@@ -255,12 +255,12 @@
 				<div class="space-y-3">
 					<!-- PIN Option -->
 					<button
-						class="w-full rounded-lg border-2 p-4 text-left transition-colors hover:border-primary hover:bg-muted/50"
+						class="w-full rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-muted/50"
 						onclick={() => selectAuthMethod('pin')}
 					>
 						<div class="flex items-start gap-3">
-							<div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-								<KeyRound class="h-5 w-5 text-primary" />
+							<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+								<KeyRound class="h-5 w-5 text-foreground" />
 							</div>
 							<div class="flex-1">
 								<p class="font-medium">PIN Code</p>
@@ -274,12 +274,12 @@
 					<!-- WebAuthn Option -->
 					{#if securityState.webauthnAvailable}
 						<button
-							class="w-full rounded-lg border-2 p-4 text-left transition-colors hover:border-primary hover:bg-muted/50"
+							class="w-full rounded-lg border border-border bg-card p-4 text-left transition-colors hover:border-primary hover:bg-muted/50"
 							onclick={() => selectAuthMethod('webauthn')}
 						>
 							<div class="flex items-start gap-3">
-								<div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-									<Fingerprint class="h-5 w-5 text-primary" />
+								<div class="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+									<Fingerprint class="h-5 w-5 text-foreground" />
 								</div>
 								<div class="flex-1">
 									<p class="font-medium">Biometrics</p>
@@ -292,13 +292,18 @@
 					{/if}
 				</div>
 
-				<Alert>
-					<ShieldCheck class="h-4 w-4" />
-					<AlertTitle>Recovery</AlertTitle>
-					<AlertDescription>
-						If you lose access, you can recover your wallet using your seed phrase.
-					</AlertDescription>
-				</Alert>
+				<!-- Recovery info styled as a card -->
+				<div class="rounded-lg border border-border bg-card p-4">
+					<div class="flex items-start gap-3">
+						<ShieldCheck class="h-5 w-5 text-muted-foreground" />
+						<div>
+							<p class="font-medium">Recovery</p>
+							<p class="text-sm text-muted-foreground">
+								If you lose access, you can recover your wallet using your seed phrase.
+							</p>
+						</div>
+					</div>
+				</div>
 
 				<!-- Store insecurely link -->
 				<div class="text-center">
