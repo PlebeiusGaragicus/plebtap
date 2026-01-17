@@ -8,6 +8,7 @@ import NDK, {
   NDKEvent,
   NDKKind,
   normalizeRelayUrl,
+  type NDKRelay,
 } from '@nostr-dev-kit/ndk';
 import { writable, derived, get } from 'svelte/store';
 import { BROWSER as browser } from 'esm-env'
@@ -16,23 +17,22 @@ import { startUnpublishedEventsMonitor, stopUnpublishedEventsMonitor } from '$li
 import { createDebug } from '$lib/utils/debug.js';
 import { initWallet } from './wallet.js';
 import { navigateTo } from './navigation.js';
+import {
+  hasEncryptedKey,
+  hasExtensionLoginMarker,
+  storeExtensionLoginMarker,
+  clearExtensionLoginMarker,
+} from '$lib/services/secureStorage.js';
+import { initializeSecurity, clearAllSecurityData } from './security.svelte.js';
 
 // Create debug logger for Nostr functionality
 const debug = createDebug('nostr');
-// const dConnect = d.extend('connect');
-// const dRelay = d.extend('relay');
-// const dAuth = d.extend('auth');
-// const dEvent = d.extend('event');
 
 // Create writable stores
 export const ndkInstance = writable<NDKSvelte | null>(null);
 export const currentUser = writable<NDKUser | null>(null);
 export const isConnecting = writable<boolean>(false);
 export const loginError = writable<string | null>(null);
-
-// Local storage keys
-export const ENCRYPTED_KEY = 'ncrypt';
-export const EXTENSION_LOGIN = 'nip07';
 
 /**
  * Initialize NDK with a specific user context
@@ -119,13 +119,13 @@ function relaySetup(ndk: NDKSvelte) {
   const d = debug.extend("relaySetup")
   d.log('Registering event listeners');
 
-  const handleRelayConnect = (relay: any) => {
+  const handleRelayConnect = (relay: NDKRelay) => {
     d.log(`Connected to: ${relay.url}`);
     // This will trigger updates to derived stores
     ndkInstance.set(ndk);
   };
 
-  const handleRelayDisconnect = (relay: any) => {
+  const handleRelayDisconnect = (relay: NDKRelay) => {
     d.log(`Disconnected from: ${relay.url}`);
     // This will trigger updates to derived stores
     ndkInstance.set(ndk);
@@ -180,10 +180,8 @@ export async function privateKeyLogin(nsec: string) {
     // Initialize NDK with private key signer
     await initNDK(signer);
 
-    // Save the key securely
-    d.log('Securely storing private key');
-    storePrivateKey(nsec);
-    d.log('Private key stored securely');
+    // Note: Private key storage is handled by the security store during PIN setup
+    // The key is encrypted with the user's PIN before being stored in IndexedDB
 
     d.log('Login with private key completed successfully');
     return true;
@@ -222,10 +220,10 @@ export async function nip07Login() {
     // Initialize NDK with nip-07 signer
     await initNDK(nip07signer);
 
-    // Store marker for extension login
+    // Store marker for extension login in IndexedDB
     if (browser) {
-      d.log('Storing extension login marker on local storage');
-      localStorage.setItem(EXTENSION_LOGIN, 'true');
+      d.log('Storing extension login marker in IndexedDB');
+      await storeExtensionLoginMarker();
     }
 
     d.log('Login with extension completed successfully');
@@ -240,19 +238,8 @@ export async function nip07Login() {
 }
 
 
-/**
- * Securely store the user's private key
- */
-function storePrivateKey(privateKey: string) {
-  const d = debug.extend("storePrivateKey")
-  d.log('Storing private key');
-  if (!browser) {
-    d.warn('Not in browser environment, skipping key storage');
-    return;
-  }
-  localStorage.setItem(ENCRYPTED_KEY, privateKey);
-  d.log('Private key stored in local storage');
-}
+// Note: Private keys are now stored via the security store (security.svelte.ts)
+// which encrypts them with a PIN before storing in IndexedDB
 
 /**
  * Unified login function that handles both login methods
@@ -298,51 +285,85 @@ export async function login(options: {
 }
 
 /**
- * Try to auto-login with stored credentials
- * This function only handles the NDK initialization, not other components
+ * Auto-login result type
  */
-export async function autoLogin() {
+export type AutoLoginResult = 
+  | { status: 'success' }
+  | { status: 'needs_unlock' }
+  | { status: 'no_credentials' }
+  | { status: 'error'; error: string };
+
+/**
+ * Try to auto-login with stored credentials
+ * Uses IndexedDB-based secure storage
+ */
+export async function autoLogin(): Promise<AutoLoginResult> {
   const d = debug.extend("autoLogin");
 
   if (!browser) {
     d.warn('Not in browser environment, skipping auto-login');
-    return null;
+    return { status: 'no_credentials' };
   }
 
   try {
-    // Check if we have a stored key
-    const storedKey = localStorage.getItem(ENCRYPTED_KEY);
-    const extensionMarker = localStorage.getItem(EXTENSION_LOGIN);
-
-    if (storedKey) {
-      d.log('Found stored private key, attempting login');
-      // In a real app, you'd decrypt this key first
-      return await login({
-        method: 'private-key',
-        privateKey: storedKey
-      })
-    } else if (extensionMarker === 'true') {
+    // Initialize security system
+    await initializeSecurity();
+    
+    // Check for encrypted key in secure storage
+    const hasSecureKey = await hasEncryptedKey();
+    if (hasSecureKey) {
+      d.log('Found encrypted key in secure storage');
+      
+      // Check if insecure storage (no auth method but has key)
+      const { securityState, unlockInsecure } = await import('./security.svelte.js');
+      
+      if (securityState.authMethod === 'none') {
+        d.log('Insecure storage detected, auto-unlocking');
+        const result = await unlockInsecure();
+        if (result.success && result.key) {
+          await privateKeyLogin(result.key.nsec);
+          // Initialize wallet after successful auto-login
+          await initWallet();
+          return { status: 'success' };
+        }
+      }
+      
+      // For secured storage, need user interaction
+      d.log('Secure storage requires user interaction for login');
+      return { status: 'needs_unlock' };
+    }
+    
+    // Check for extension login marker in IndexedDB
+    const hasExtensionMarker = await hasExtensionLoginMarker();
+    if (hasExtensionMarker) {
       d.log('Found extension login marker, attempting extension login');
 
       // Check if extension is available
       if (!window.nostr) {
         d.error('Extension not available but marker exists');
-        throw new Error('Nostr extension not found. Please install or enable your extension.');
+        return { status: 'error', error: 'Nostr extension not found. Please install or enable your extension.' };
       }
 
-      return await login({ method: "nip-07" });
-    } else {
-      d.log('No stored credentials found, auto-login skipped');
+      await login({ method: "nip-07" });
+      return { status: 'success' };
     }
+    
+    d.log('No stored credentials found, auto-login skipped');
+    return { status: 'no_credentials' };
   } catch (error) {
     d.error('Auto-login failed:', error);
     // Clear potentially corrupted credentials
     d.log('Clearing potentially corrupted credentials');
-    localStorage.removeItem(ENCRYPTED_KEY);
-    localStorage.removeItem(EXTENSION_LOGIN);
+    await clearAllSecurityData();
+    return { status: 'error', error: error instanceof Error ? error.message : 'Auto-login failed' };
   }
+}
 
-  return null;
+/**
+ * Login with a decrypted key (after unlock)
+ */
+export async function loginWithDecryptedKey(nsec: string): Promise<boolean> {
+  return privateKeyLogin(nsec);
 }
 
 /**
@@ -376,7 +397,7 @@ function clearNostrCache(npub: string): Promise<void> {
 /**
  * Logout function
  */
-export function logout(
+export async function logout(
   clearCache: boolean = false) {
   const d = debug.extend("logout")
   d.log('Logging out user');
@@ -400,11 +421,11 @@ export function logout(
   }
   currentUser.set(null);
 
-  // Clear stored key
+  // Clear secure storage (IndexedDB)
   if (browser) {
-    d.log('Removing stored private key and extension marker if any');
-    localStorage.removeItem(ENCRYPTED_KEY);
-    localStorage.removeItem(EXTENSION_LOGIN);
+    d.log('Clearing secure storage');
+    await clearAllSecurityData();
+    await clearExtensionLoginMarker();
   }
   d.log('Logout complete');
 }

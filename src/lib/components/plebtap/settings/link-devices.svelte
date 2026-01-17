@@ -67,7 +67,7 @@
 		<div class=" space-y-4 px-1">
 			<!-- Instructions -->
 			<div class="text-sm text-muted-foreground">
-				Open Cypherflow.ai in a new deviece and click on "Link from another device". Scan this QR
+				On your new device, click on "Link from another device" and scan this QR
 				code and enter the PIN below to link your account.
 			</div>
 
@@ -76,7 +76,7 @@
 				<Alert variant="warning" class="mb-2 py-2 text-xs">
 					<AlertDescription>
 						Link Devices is not available when using a browser extension. Your private key is
-						managed by the extension.
+						managed by that extension.
 					</AlertDescription>
 				</Alert>
 			{:else if isGenerating}

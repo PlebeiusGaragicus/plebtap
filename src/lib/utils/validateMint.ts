@@ -8,11 +8,13 @@ import { get } from 'svelte/store';
  * @param mintUrl The URL of the mint to validate
  * @returns A validation result with status and error message if any
  */
-export async function validateMint(mintUrl: string): Promise<{
+export interface MintValidationResult {
   isValid: boolean;
   error?: string;
-  info?: any;
-}> {
+  info?: { version?: string; name?: string };
+}
+
+export async function validateMint(mintUrl: string): Promise<MintValidationResult> {
   if (!mintUrl.trim()) {
     return { isValid: false, error: 'Mint URL cannot be empty' };
   }

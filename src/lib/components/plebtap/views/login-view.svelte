@@ -9,6 +9,7 @@
 	import LogIn from '@lucide/svelte/icons/log-in'
 	import UserPlus from '@lucide/svelte/icons/user-plus'
 	import Key from '@lucide/svelte/icons/key'
+	import FileKey from '@lucide/svelte/icons/file-key'
 	import MonitorSmartphone from '@lucide/svelte/icons/monitor-smartphone'
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 
@@ -63,6 +64,18 @@
 			<LogIn class="mr-2 h-4 w-4" />
 			{hasNostrExtension ? 'Continue with Nostr extension' : 'No Nostr Extension Found'}
 		</Button>
+		<!-- Seed Phrase Import -->
+		<div class="space-y-2">
+			<Button
+				variant="outline"
+				class="w-full justify-start"
+				disabled={appState.status === InitStatus.INITIALIZING}
+				onclick={() => navigateTo('login-import-mnemonic')}
+			>
+				<FileKey class="mr-2 h-4 w-4" />
+				Import Seed Phrase
+			</Button>
+		</div>
 		<!-- Private Key Input -->
 		<div class="space-y-2">
 			<Button

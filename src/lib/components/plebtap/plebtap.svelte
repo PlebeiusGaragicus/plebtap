@@ -4,6 +4,7 @@
 		initNavigation,
 		isUserMenuOpen,
 		openMenu,
+		navigateTo,
 	} from '$lib/stores/navigation.js';
 	import { MediaQuery } from 'svelte/reactivity';
 	import { Popover, PopoverTrigger, PopoverContent }  from '$lib/components/ui/popover/index.js';
@@ -12,39 +13,105 @@
 
 	import { Drawer, DrawerTrigger, DrawerContent }  from '$lib/components/ui/drawer/index.js';
 	import { onMount } from 'svelte';
-	import { autoLogin } from '$lib/stores/nostr.js';
+	import { autoLogin, loginWithDecryptedKey } from '$lib/stores/nostr.js';
+	import { securityState } from '$lib/stores/security.svelte.js';
+	import { UnlockDialog } from './dialogs/index.js';
+	import { initWallet } from '$lib/stores/wallet.js';
 
 	const isDesktop = new MediaQuery('(min-width: 768px)').current;
+	
+	// Unlock dialog state
+	let showUnlockDialog = $state(false);
+	let autoLoginError = $state<string | null>(null);
+	
+	// Reactive check for locked state - directly access securityState for reactivity
+	let locked = $derived(
+		securityState.hasStoredKey &&
+		securityState.authMethod !== 'none' &&
+		!securityState.isUnlocked
+	);
+
 	// When popover opens, reset current view
-	$: if ($isUserMenuOpen) {
-		initNavigation();
-		openMenu();
-	}
+	$effect(() => {
+		if ($isUserMenuOpen) {
+			initNavigation();
+			openMenu();
+		}
+	});
 
 	// Try auto login
-	onMount(() => {
-		autoLogin();
-	})
+	onMount(async () => {
+		const result = await autoLogin();
+		
+		if (result.status === 'needs_unlock') {
+			// Don't show dialog immediately - wait for user to click the locked button
+		} else if (result.status === 'error') {
+			autoLoginError = result.error;
+		}
+	});
+
+	async function handleUnlockSuccess(result: { key?: { nsec: string } }) {
+		if (result.key?.nsec) {
+			try {
+				await loginWithDecryptedKey(result.key.nsec);
+				// Initialize wallet after successful unlock
+				await initWallet();
+				// Navigate to main view after successful unlock
+				navigateTo('main');
+			} catch (error) {
+				autoLoginError = error instanceof Error ? error.message : 'Login failed';
+			}
+		}
+	}
+	
+	function handleTriggerClick() {
+		// Show unlock dialog (only called when locked)
+		showUnlockDialog = true;
+	}
 </script>
 
 {#if isDesktop}
 	<div class="relative">
-		<Popover bind:open={$isUserMenuOpen}>
-			<PopoverTrigger>
+		{#if locked}
+			<!-- When locked, just show the trigger with click handler for unlock dialog -->
+			<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+			<div onclick={handleTriggerClick} class="cursor-pointer">
 				<PlebtapTrigger />
-			</PopoverTrigger>
-			<PopoverContent align="end" class="w-80 overflow-hidden p-0">
-				<ViewRouter {isDesktop} />
-			</PopoverContent>
-		</Popover>
+			</div>
+		{:else}
+			<Popover bind:open={$isUserMenuOpen}>
+				<PopoverTrigger>
+					<PlebtapTrigger />
+				</PopoverTrigger>
+				<PopoverContent align="end" class="w-80 overflow-hidden p-0">
+					<ViewRouter {isDesktop} />
+				</PopoverContent>
+			</Popover>
+		{/if}
 	</div>
 {:else}
-	<Drawer bind:open={$isUserMenuOpen} shouldScaleBackground>
-		<DrawerTrigger>
+	{#if locked}
+		<!-- When locked, just show the trigger with click handler for unlock dialog -->
+		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+		<div onclick={handleTriggerClick} class="cursor-pointer">
 			<PlebtapTrigger />
-		</DrawerTrigger>
-		<DrawerContent class="pt-0">
-			<ViewRouter {isDesktop} />
-		</DrawerContent>
-	</Drawer>
+		</div>
+	{:else}
+		<Drawer bind:open={$isUserMenuOpen} shouldScaleBackground>
+			<DrawerTrigger>
+				<PlebtapTrigger />
+			</DrawerTrigger>
+			<DrawerContent class="pt-0">
+				<ViewRouter {isDesktop} />
+			</DrawerContent>
+		</Drawer>
+	{/if}
 {/if}
+
+<!-- Unlock Dialog for locked wallet -->
+<UnlockDialog
+	bind:open={showUnlockDialog}
+	title="Unlock Wallet"
+	description="Enter your PIN to unlock your wallet"
+	onSuccess={handleUnlockSuccess}
+/>

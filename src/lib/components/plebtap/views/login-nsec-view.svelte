@@ -1,20 +1,28 @@
 <!-- src/lib/components/nostr/NostrPrivateKeyView.svelte -->
 <script lang="ts">
-	import { isConnecting, login } from '$lib/stores/nostr.js';
-	import { appState, InitStatus } from '$lib/services/init.svelte.js'
-	import { navigateTo } from '$lib/stores/navigation.js'
-	import ViewContainer from './view-container.svelte'
+	import { isConnecting, privateKeyLogin } from '$lib/stores/nostr.js';
+	import { appState, InitStatus } from '$lib/services/init.svelte.js';
+	import { navigateTo } from '$lib/stores/navigation.js';
+	import ViewContainer from './view-container.svelte';
 	import { slide } from 'svelte/transition';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import CircleAlert from '@lucide/svelte/icons/circle-alert'
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left'
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
+	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import Input from '$lib/components/ui/input/input.svelte';
-    import { Alert, AlertTitle, AlertDescription } from "$lib/components/ui/alert/index.js";
+	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert/index.js';
+	import { AuthSetupDialog } from '$lib/components/plebtap/dialogs/index.js';
+	import { nsecToPrivateKey, privateKeyToPublicKey } from '$lib/services/crypto.js';
+	import type { Nsec, PrivateKeyHex, PublicKeyHex } from '$lib/types/security.js';
+	import { initWallet } from '$lib/stores/wallet.js';
 
-
-	let privateKey = '';
-	let errorMessage = '';
-	let securityWarningAccepted = false;
+	let privateKey = $state('');
+	let errorMessage = $state('');
+	let securityWarningAccepted = $state(false);
+	
+	// Auth setup state
+	let showAuthSetup = $state(false);
+	let derivedPrivateKey = $state<PrivateKeyHex | null>(null);
+	let derivedPublicKey = $state<PublicKeyHex | null>(null);
 
 	async function handlePrivateKeyLogin(event: SubmitEvent) {
 		// Prevent the default form submission behavior
@@ -27,10 +35,16 @@
 
 		try {
 			errorMessage = '';
-			await login({
-				method: 'private-key',
-				privateKey
-			});
+			
+			// Convert nsec to hex (user input treated as Nsec)
+			const privateKeyHex = nsecToPrivateKey(privateKey as Nsec);
+			const publicKeyHex = privateKeyToPublicKey(privateKeyHex);
+			
+			derivedPrivateKey = privateKeyHex;
+			derivedPublicKey = publicKeyHex;
+			
+			// Show auth setup dialog to encrypt the key
+			showAuthSetup = true;
 
 		} catch (error) {
 			if (error instanceof Error) {
@@ -39,6 +53,23 @@
 				errorMessage = 'Unknown error during login';
 			}
 			console.error('Login error:', error);
+		}
+	}
+	
+	async function handleAuthSetupComplete() {
+		showAuthSetup = false;
+		
+		try {
+			// Now login with the private key
+			await privateKeyLogin(privateKey);
+			
+			// Initialize wallet
+			await initWallet();
+			
+			// Navigate to main
+			navigateTo('main');
+		} catch (error) {
+			errorMessage = error instanceof Error ? error.message : 'Login failed after setup';
 		}
 	}
 </script>
@@ -51,23 +82,19 @@
 		<h3 class="text-lg font-medium">Private Key Login</h3>
 	</div>
 
-	<!-- Security Warning -->
+	<!-- Security Notice -->
 	{#if !securityWarningAccepted}
 		<div transition:slide>
-			<Alert variant="warning" class="mb-4">
+			<Alert class="mb-4">
 				<CircleAlert class="h-4 w-4" />
-				<AlertTitle>Security Warning</AlertTitle>
+				<AlertTitle>Security Notice</AlertTitle>
 				<AlertDescription class="mt-2 space-y-3">
 					<p class="text-sm">
-						Private keys are stored unencrypted in browser storage. We recommend
-						<strong>creating a new account</strong> or
-						<strong>linking an existing PlebTap account</strong> instead.
-					</p>
-					<p class="text-xs text-muted-foreground">
-						Only proceed with throwaway keys or if you understand the risks.
+						Your private key will be encrypted and stored securely using PIN or biometric protection.
+						For the best experience, we recommend <strong>creating a new account</strong> with seed phrase backup.
 					</p>
 					<Button size="sm" onclick={() => (securityWarningAccepted = true)} class="mt-2">
-						I Understand the Risks
+						Continue
 					</Button>
 				</AlertDescription>
 			</Alert>
@@ -115,3 +142,13 @@
 		</form>
 	</div>
 </ViewContainer>
+
+<!-- Auth Setup Dialog -->
+{#if derivedPrivateKey && derivedPublicKey}
+	<AuthSetupDialog
+		bind:open={showAuthSetup}
+		privateKeyHex={derivedPrivateKey}
+		publicKeyHex={derivedPublicKey}
+		onComplete={handleAuthSetupComplete}
+	/>
+{/if}

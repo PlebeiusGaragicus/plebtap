@@ -12,13 +12,21 @@ export interface RelaySyncProgress {
     endTime?: number;
 }
 
+/**
+ * Negentropy instance interface
+ */
+export interface NegentropyInstance {
+    initiate(): Uint8Array;
+    reconcile(msg: Uint8Array): [Uint8Array | null, string[], string[]];
+}
+
 export interface RelaySyncState {
     url: string;
     status: 'idle' | 'connecting' | 'syncing' | 'uploading' | 'downloading' | 'complete' | 'error';
     progress: RelaySyncProgress;
     error?: string;
     subscriptionId?: string;
-    negentropy?: any;
+    negentropy?: NegentropyInstance;
 }
 
 export interface FilterSyncResult {
