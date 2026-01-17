@@ -43,6 +43,12 @@
 			<Skeleton class="h-4 w-16" />
 		{/if}
 	</Button>
+{:else if securityState.hasStoredKey}
+	<!-- Has stored key but auto-login in progress -->
+	<Button variant="default" disabled>
+		<span class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+		<span class="font-medium">Loading...</span>
+	</Button>
 {:else}
 	<Button variant="default" size="sm" disabled={$isConnecting}>
 		{#if $isConnecting}
