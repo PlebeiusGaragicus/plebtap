@@ -7,7 +7,7 @@
 		navigateTo,
 	} from '$lib/stores/navigation.js';
 	import { MediaQuery } from 'svelte/reactivity';
-	import { Popover, PopoverTrigger, PopoverContent }  from '$lib/components/ui/popover/index.js';
+	import { Popover, PopoverTrigger, PopoverContent } from '$lib/components/ui/popover/index.js';
 	import ViewRouter from './views/view-router.svelte';
 	import PlebtapTrigger from './plebtap-trigger.svelte';
 
@@ -19,11 +19,11 @@
 	import { initWallet } from '$lib/stores/wallet.js';
 
 	const isDesktop = new MediaQuery('(min-width: 768px)').current;
-	
+
 	// Unlock dialog state
 	let showUnlockDialog = $state(false);
 	let autoLoginError = $state<string | null>(null);
-	
+
 	// Reactive check for locked state - directly access securityState for reactivity
 	let locked = $derived(
 		securityState.hasStoredKey &&
@@ -42,7 +42,7 @@
 	// Try auto login
 	onMount(async () => {
 		const result = await autoLogin();
-		
+
 		if (result.status === 'needs_unlock') {
 			// Don't show dialog immediately - wait for user to click the locked button
 		} else if (result.status === 'error') {
@@ -63,7 +63,7 @@
 			}
 		}
 	}
-	
+
 	function handleTriggerClick() {
 		// Show unlock dialog (only called when locked)
 		showUnlockDialog = true;
@@ -83,8 +83,8 @@
 				<PopoverTrigger>
 					<PlebtapTrigger />
 				</PopoverTrigger>
-				<PopoverContent align="end" class="w-80 overflow-hidden p-0">
-					<ViewRouter {isDesktop} />
+				<PopoverContent align="end" class="h-[420px] w-80 overflow-hidden p-0">
+					<ViewRouter />
 				</PopoverContent>
 			</Popover>
 		{/if}
@@ -97,13 +97,13 @@
 			<PlebtapTrigger />
 		</div>
 	{:else}
-		<!-- Mobile: Full-screen sheet instead of partial drawer -->
+		<!-- Mobile: Full-screen sheet -->
 		<MobileSheet bind:open={$isUserMenuOpen}>
 			<MobileSheetTrigger>
 				<PlebtapTrigger />
 			</MobileSheetTrigger>
 			<MobileSheetContent showCloseButton={true}>
-				<ViewRouter {isDesktop} />
+				<ViewRouter />
 			</MobileSheetContent>
 		</MobileSheet>
 	{/if}

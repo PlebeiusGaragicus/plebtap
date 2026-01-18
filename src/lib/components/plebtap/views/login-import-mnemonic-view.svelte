@@ -2,11 +2,10 @@
 <script lang="ts">
 	import { login } from '$lib/stores/nostr.js';
 	import { appState, InitStatus } from '$lib/services/init.svelte.js';
-	import { navigateTo } from '$lib/stores/navigation.js';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert/index.js';
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
 	import ShieldCheck from '@lucide/svelte/icons/shield-check';
 	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
@@ -114,16 +113,10 @@
 	}
 </script>
 
-<ViewContainer className="p-4">
-	<div class="mb-4 flex items-center">
-		<Button variant="ghost" size="icon" onclick={() => navigateTo('login')} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Import Seed Phrase</h3>
-	</div>
-
-	<!-- Security info -->
-	<Alert class="mb-4">
+<ViewContainer>
+	<ViewLayout title="Import Seed Phrase" backTo="login">
+		<!-- Security info -->
+		<Alert class="mb-4">
 		<ShieldCheck class="h-4 w-4" />
 		<AlertTitle>Secure Import</AlertTitle>
 		<AlertDescription class="text-xs">
@@ -211,9 +204,10 @@
 		</Button>
 	</form>
 
-	<p class="mt-4 text-center text-xs text-muted-foreground">
-		Your seed phrase is only used locally and never transmitted.
-	</p>
+		<p class="mt-4 text-center text-xs text-muted-foreground">
+			Your seed phrase is only used locally and never transmitted.
+		</p>
+	</ViewLayout>
 </ViewContainer>
 
 <!-- Auth Setup Dialog -->

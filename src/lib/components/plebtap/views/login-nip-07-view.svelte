@@ -1,11 +1,12 @@
+<!-- src/lib/components/plebtap/views/login-nip-07-view.svelte -->
 <script lang="ts">
 	import { isConnecting, login } from '$lib/stores/nostr.js';
 	import { appState, InitStatus } from '$lib/services/init.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-	import { isUserMenuOpen, navigateTo } from '$lib/stores/navigation.js';
+	import { navigateTo } from '$lib/stores/navigation.js';
 	import { onMount } from 'svelte';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 
 	let hasNostrExtension = $state<boolean>(!!window.nostr);
 	let errorMessage = $state<string>('');
@@ -49,25 +50,19 @@
 	}
 </script>
 
-<ViewContainer className="p-4">
-	<div class="mb-4 flex items-center">
-		<Button variant="ghost" size="icon" onclick={() => navigateTo('login')} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Nostr Extension Login</h3>
-	</div>
+<ViewContainer>
+	<ViewLayout title="Nostr Extension Login" backTo="login">
+		<!-- Error message display -->
+		{#if errorMessage}
+			<div
+				class="relative mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700"
+				role="alert"
+			>
+				<span class="block sm:inline">{errorMessage}</span>
+			</div>
+		{/if}
 
-	<!-- Error message display -->
-	{#if errorMessage}
-		<div
-			class="relative mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700"
-			role="alert"
-		>
-			<span class="block sm:inline">{errorMessage}</span>
-		</div>
-	{/if}
-
-	<div class="space-y-4">
+		<div class="space-y-4">
 		<p class="text-sm text-muted-foreground">
 			{hasNostrExtension
 				? 'Connecting to your Nostr extension. Please approve the connection in your extension if prompted.'
@@ -114,5 +109,6 @@
 		<Button variant="outline" class="w-full" onclick={() => navigateTo('login')}>
 			Choose Another Login Method
 		</Button>
-	</div>
+		</div>
+	</ViewLayout>
 </ViewContainer>

@@ -20,13 +20,15 @@
 	}
 </script>
 
-<div class="space-y-3">
+<div class="flex flex-1 flex-col space-y-3">
 	<div class="flex items-center justify-between">
 		<span class="text-xs font-medium text-muted-foreground">
 			Your relays ({$relays.length})
 		</span>
 	</div>
-	<div class="max-h-40 space-y-1 overflow-y-auto p-1">
+	
+	<!-- Relay list - scrollable if needed -->
+	<div class="flex-1 space-y-1 overflow-y-auto">
 		{#if $relays.length === 0}
 			<div class="py-2 text-center text-xs text-muted-foreground">No relays configured</div>
 		{:else}
@@ -34,12 +36,14 @@
 				<RelayListItem {relay} />
 			{/each}
 		{/if}
-		<div class="flex items-center space-x-2">
-			<Input placeholder="wss://relay.example.com" bind:value={relayUrl} class="flex-1 text-xs" />
-			<Button size="sm" onclick={handleAddRelay} disabled={!relayUrl.trim()}>
-				<Plus />
-				Add
-			</Button>
-		</div>
+	</div>
+	
+	<!-- Add relay input - always visible at bottom -->
+	<div class="flex shrink-0 items-center space-x-2 pt-2">
+		<Input placeholder="wss://relay.example.com" bind:value={relayUrl} class="flex-1 text-xs" />
+		<Button size="sm" onclick={handleAddRelay} disabled={!relayUrl.trim()}>
+			<Plus />
+			Add
+		</Button>
 	</div>
 </div>

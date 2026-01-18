@@ -1,4 +1,4 @@
-<!-- src/lib/components/nostr/QRScannerView.svelte -->
+<!-- src/lib/components/plebtap/views/scanner-view.svelte -->
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
 	import { scanResult, identifyScanType } from '$lib/stores/scan-store.js';
@@ -7,10 +7,10 @@
 
 	import { Button } from '$lib/components/ui/button/index.js';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 	import QrScanner from '../wallet/qr-scanner.svelte';
 
-    import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-    import ClipboardPaste from '@lucide/svelte/icons/clipboard-paste';
+	import ClipboardPaste from '@lucide/svelte/icons/clipboard-paste';
 
 	// Clipboard state
 	let canPasteFromClipboard =
@@ -88,36 +88,26 @@
 	}
 </script>
 
-<ViewContainer className="space-y-4 p-4">
-	<div class="mb-4 flex items-center">
-		<Button
-			variant="ghost"
-			size="icon"
-			onclick={() => navigateTo($context.sourceView)}
-			class="mr-2"
-		>
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Scan QR Code</h3>
-	</div>
+<ViewContainer>
+	<ViewLayout title="Scan QR Code" backTo={$context.sourceView}>
+		<div class="space-y-4">
+			<!-- QR Scanner -->
+			<div class="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
+				<QrScanner on:scanned={handleQrScanned} />
+			</div>
 
-	<div class="space-y-4">
-		<!-- QR Scanner -->
-		<div class="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
-			<QrScanner on:scanned={handleQrScanned} />
+			<!-- Instructions -->
+			<div class="text-center text-sm text-muted-foreground">
+				{instructionText}
+			</div>
+
+			<!-- Paste button (if clipboard is available) -->
+			{#if canPasteFromClipboard}
+				<Button variant="outline" class="w-full" onclick={handlePaste}>
+					<ClipboardPaste class="mr-2 h-4 w-4" />
+					Paste from clipboard
+				</Button>
+			{/if}
 		</div>
-
-		<!-- Instructions -->
-		<div class="text-center text-sm text-muted-foreground">
-			{instructionText}
-		</div>
-
-		<!-- Paste button (if clipboard is available) -->
-		{#if canPasteFromClipboard}
-			<Button variant="outline" class="w-full" onclick={handlePaste}>
-				<ClipboardPaste class="mr-2 h-4 w-4" />
-				Paste from clipboard
-			</Button>
-		{/if}
-	</div>
+	</ViewLayout>
 </ViewContainer>

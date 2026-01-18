@@ -6,7 +6,7 @@
 	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert/index.js';
 	import { navigateTo } from '$lib/stores/navigation.js';
 	import ViewContainer from './view-container.svelte';
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
+	import ViewLayout from './view-layout.svelte';
 	import Copy from '@lucide/svelte/icons/copy';
 	import Check from '@lucide/svelte/icons/check';
 	import ShieldAlert from '@lucide/svelte/icons/shield-alert';
@@ -206,16 +206,26 @@
 	}
 </script>
 
-<ViewContainer className="p-4">
-	<div class="mb-4 flex items-center">
-		<Button variant="ghost" size="icon" onclick={() => step === 'choose' ? navigateTo('login') : step = 'choose'} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">{getTitle()}</h3>
-	</div>
+<ViewContainer>
+	<ViewLayout 
+		title={getTitle()} 
+		backTo={step === 'choose' ? 'login' : undefined}
+	>
+		{#snippet header()}
+			<div class="flex shrink-0 items-center gap-2 p-2">
+				<Button 
+					variant="ghost" 
+					size="icon" 
+					onclick={() => step === 'choose' ? navigateTo('login') : step = 'choose'}
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+				</Button>
+				<h3 class="text-lg font-medium">{getTitle()}</h3>
+			</div>
+		{/snippet}
 
-	<!-- Error message display -->
-	{#if errorMessage}
+		<!-- Error message display -->
+		{#if errorMessage}
 		<Alert variant="destructive" class="mb-4">
 			<ShieldAlert class="h-4 w-4" />
 			<AlertDescription>{errorMessage}</AlertDescription>
@@ -453,6 +463,7 @@
 			<p class="text-sm font-medium">Generating your new account...</p>
 		</div>
 	{/if}
+	</ViewLayout>
 </ViewContainer>
 
 <!-- Auth Setup Dialog -->

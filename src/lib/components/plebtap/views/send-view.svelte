@@ -1,4 +1,4 @@
-<!-- src/lib/components/nostr/NostrSendView.svelte -->
+<!-- src/lib/components/plebtap/views/send-view.svelte -->
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
@@ -13,26 +13,25 @@
 	import { navigateTo } from '$lib/stores/navigation.js';
 	import { copyToClipboard, pasteFromClipboard } from '$lib/utils/clipboard.js';
 
-
-    import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs/index.js";
+	import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import TokenQrCode from '../wallet/token-qr-code.svelte';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 
-    import LoaderCircle from '@lucide/svelte/icons/loader-circle';
-    import CircleAlert from '@lucide/svelte/icons/circle-alert';
-    import CircleCheck from '@lucide/svelte/icons/circle-check';
-    import Send from '@lucide/svelte/icons/send';
-    import ArrowRight from '@lucide/svelte/icons/arrow-right';
-    import Banknote from '@lucide/svelte/icons/banknote';
-    import Info from '@lucide/svelte/icons/info';
-    import Copy from '@lucide/svelte/icons/copy';
-    import Share2 from '@lucide/svelte/icons/share-2';
-    import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-    import Zap from '@lucide/svelte/icons/zap';
-    import ClipboardPaste from '@lucide/svelte/icons/clipboard-paste';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
+	import Send from '@lucide/svelte/icons/send';
+	import ArrowRight from '@lucide/svelte/icons/arrow-right';
+	import Banknote from '@lucide/svelte/icons/banknote';
+	import Info from '@lucide/svelte/icons/info';
+	import Copy from '@lucide/svelte/icons/copy';
+	import Share2 from '@lucide/svelte/icons/share-2';
+	import Zap from '@lucide/svelte/icons/zap';
+	import ClipboardPaste from '@lucide/svelte/icons/clipboard-paste';
 	import QrCode from '@lucide/svelte/icons/qr-code';
 
 
@@ -274,14 +273,9 @@
 	});
 </script>
 
-<ViewContainer className="p-4">
-	<div class="mb-4 flex items-center">
-		<Button variant="ghost" size="icon" onclick={() => navigateTo('main')} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Send Sats</h3>
-	</div>
-	<div class="space-y-4">
+<ViewContainer>
+	<ViewLayout title="Send Sats" backTo="main">
+		<div class="space-y-4">
 		<Tabs value={activeTab} onValueChange={(value) => (activeTab = value)} class="w-full">
 			<TabsList class="grid w-full grid-cols-2">
 				<TabsTrigger value="lightning" class="flex items-center justify-center">
@@ -523,5 +517,6 @@
 				<p class="text-sm">{error}</p>
 			</div>
 		{/if}
-	</div>
+		</div>
+	</ViewLayout>
 </ViewContainer>

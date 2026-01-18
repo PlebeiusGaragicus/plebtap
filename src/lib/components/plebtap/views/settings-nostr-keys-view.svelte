@@ -1,15 +1,14 @@
 <!-- src/lib/components/plebtap/views/settings-nostr-keys-view.svelte -->
 <script lang="ts">
 	import { currentUser, ndkInstance } from '$lib/stores/nostr.js';
-	import { navigateTo } from '$lib/stores/navigation.js';
 	import { copyToClipboard } from '$lib/utils/clipboard.js';
 
 	import { Alert, AlertDescription } from '$lib/components/ui/alert/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 	import { UnlockDialog, AuthSetupDialog } from '$lib/components/plebtap/dialogs/index.js';
 
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import Copy from '@lucide/svelte/icons/copy';
 	import Eye from '@lucide/svelte/icons/eye';
 	import EyeOff from '@lucide/svelte/icons/eye-off';
@@ -253,15 +252,9 @@
 </script>
 
 <ViewContainer>
-	<div class="flex items-center p-2">
-		<Button variant="ghost" size="icon" onclick={() => navigateTo('settings')} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Nostr Keys</h3>
-	</div>
-
-	<div class="flex-1 space-y-3 px-4">
-				<!-- Security Status -->
+	<ViewLayout title="Nostr Keys" backTo="settings">
+		<div class="space-y-3">
+			<!-- Security Status -->
 				{#if securityState.authMethod === 'pin'}
 					<div class="flex items-center gap-2 text-xs text-green-600">
 						<ShieldCheck class="h-3 w-3" />
@@ -480,7 +473,8 @@
 						</div>
 					</div>
 				{/if}
-	</div>
+		</div>
+	</ViewLayout>
 </ViewContainer>
 
 <!-- Unlock Dialog -->
