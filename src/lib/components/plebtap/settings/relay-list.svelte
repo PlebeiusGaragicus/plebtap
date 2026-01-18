@@ -40,7 +40,7 @@
 	
 	<!-- Add relay input - always visible at bottom -->
 	<div class="flex shrink-0 items-center space-x-2 pt-2">
-		<Input placeholder="wss://relay.example.com" bind:value={relayUrl} class="flex-1 text-xs" />
+		<Input placeholder="wss://relay.example.com" bind:value={relayUrl} class="flex-1 text-base md:text-xs" />
 		<Button size="sm" onclick={handleAddRelay} disabled={!relayUrl.trim()}>
 			<Plus />
 			Add

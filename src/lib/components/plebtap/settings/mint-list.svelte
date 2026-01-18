@@ -74,7 +74,7 @@
 	<Separator />
 	<div class="space-y-2">
 		<div class="flex items-center space-x-2">
-			<Input placeholder="https://mint.example.com" bind:value={mintUrl} class="flex-1 text-xs" />
+			<Input placeholder="https://mint.example.com" bind:value={mintUrl} class="flex-1 text-base md:text-xs" />
 			<Button size="sm" onclick={handleAddMint} disabled={!mintUrl.trim() || isProcessing}>
 				{#if isProcessing}
 					<LoaderCircle class="animate-spin" />
