@@ -6,7 +6,6 @@
 
 	import { Alert, AlertDescription } from '$lib/components/ui/alert/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
 	import ViewContainer from './view-container.svelte';
 	import { UnlockDialog, AuthSetupDialog } from '$lib/components/plebtap/dialogs/index.js';
 
@@ -253,7 +252,7 @@
 	}
 </script>
 
-<ViewContainer className="p-0 max-h-[55vh] md:max-h-[60vh]">
+<ViewContainer className="p-0">
 	<div class="mb-2 flex items-center p-2">
 		<Button variant="ghost" size="icon" onclick={() => navigateTo('settings')} class="mr-2">
 			<ChevronLeft class="h-4 w-4" />
@@ -261,9 +260,7 @@
 		<h3 class="text-lg font-medium">Nostr Keys</h3>
 	</div>
 
-	<ScrollArea class="p-2">
-		<div class="max-h-[60vh] px-2 md:max-h-[50vh]">
-			<div class="space-y-3 px-1">
+	<div class="space-y-3 px-4">
 				<!-- Security Status -->
 				{#if securityState.authMethod === 'pin'}
 					<div class="flex items-center gap-2 text-xs text-green-600">
@@ -483,9 +480,7 @@
 						</div>
 					</div>
 				{/if}
-			</div>
-		</div>
-	</ScrollArea>
+	</div>
 </ViewContainer>
 
 <!-- Unlock Dialog -->

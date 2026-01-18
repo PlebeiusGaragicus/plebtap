@@ -7,7 +7,6 @@
 	import type { NDKRelay } from '@nostr-dev-kit/ndk';
 
 	import Button from '$lib/components/ui/button/button.svelte';
-	import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
 	import ViewContainer from './view-container.svelte';
 	import SyncList from '../negentropy/sync-list.svelte';
 
@@ -57,7 +56,7 @@
 	}
 </script>
 
-<ViewContainer className="p-0 max-h-[55vh] md:max-h-[60vh]">
+<ViewContainer className="p-0">
 	<div class="mb-2 flex items-center p-2">
 		<Button variant="ghost" size="icon" onclick={() => navigateTo('settings')} class="mr-2">
 			<ChevronLeft class="h-4 w-4" />
@@ -65,9 +64,7 @@
 		<h3 class="text-lg font-medium">Wallet Sync</h3>
 	</div>
 
-	<ScrollArea class="p-2">
-		<div class="max-h-[60vh] px-2 md:max-h-[50vh]">
-			<div class="space-y-4">
+	<div class="space-y-4 px-4">
 				<div class="space-y-2">
 					<p class="text-sm text-muted-foreground">
 						Sync your wallet events across relays using Negentropy for efficient reconciliation. This
@@ -93,7 +90,5 @@
 						Sync All Relays
 					{/if}
 				</Button>
-			</div>
-		</div>
-	</ScrollArea>
+	</div>
 </ViewContainer>
