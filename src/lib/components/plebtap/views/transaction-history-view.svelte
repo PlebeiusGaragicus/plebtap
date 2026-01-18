@@ -19,7 +19,6 @@
     import ArrowDownLeft from '@lucide/svelte/icons/arrow-down-left';
     import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
     import RefreshCw from '@lucide/svelte/icons/refresh-cw';
-	import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
 
 	// Local state
 	let refreshing = false;
@@ -63,7 +62,7 @@
 	}
 </script>
 
-<ViewContainer className="p-4 max-h-[55vh]">
+<ViewContainer className="p-4">
 	<!-- Transactions List View -->
 	<div class="mb-4 flex items-center justify-between">
 		<div class="flex items-center">
@@ -84,8 +83,7 @@
 		</Button>
 	</div>
 
-	<ScrollArea>
-		<div class="max-h-[60vh] space-y-1">
+	<div class="space-y-1">
 			{#if $isLoadingTransactions}
 				<div class="flex items-center justify-center py-8">
 					<LoaderCircle class="h-6 w-6 animate-spin text-primary" />
@@ -137,6 +135,5 @@
 					{/if}
 				{/each}
 			{/if}
-		</div>
-	</ScrollArea>
+	</div>
 </ViewContainer>

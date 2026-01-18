@@ -5,7 +5,6 @@
 
 	import { Alert, AlertDescription } from '$lib/components/ui/alert/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
-	import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import ViewContainer from './view-container.svelte';
 	import MintList from '../settings/mint-list.svelte';
@@ -34,7 +33,7 @@
 	}
 </script>
 
-<ViewContainer className="p-0 max-h-[55vh] md:max-h-[60vh]">
+<ViewContainer className="p-0">
 	<div class="mb-2 flex items-center p-2">
 		<Button variant="ghost" size="icon" onclick={() => navigateTo('settings')} class="mr-2">
 			<ChevronLeft class="h-4 w-4" />
@@ -42,9 +41,7 @@
 		<h3 class="text-lg font-medium">Mint Management</h3>
 	</div>
 
-	<ScrollArea class="p-2">
-		<div class="max-h-[60vh] px-2 md:max-h-[50vh]">
-			<div class="space-y-3">
+	<div class="space-y-3 px-4">
 				<p class="text-sm text-muted-foreground">
 					Mints are servers that issue ecash tokens. Add trusted mints to send, receive, and manage
 					your Cashu tokens.
@@ -74,7 +71,5 @@
 						</AlertDescription>
 					</Alert>
 				{/if}
-			</div>
-		</div>
-	</ScrollArea>
+	</div>
 </ViewContainer>
