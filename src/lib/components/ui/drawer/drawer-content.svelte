@@ -33,5 +33,10 @@
 			class="bg-muted mx-auto mt-4 hidden h-2 w-[100px] shrink-0 rounded-full group-data-[vaul-drawer-direction=bottom]/drawer-content:block"
 		></div>
 		{@render children?.()}
+		<!-- Safe area filler for bottom drawer - extends background into home indicator area -->
+		<div 
+			class="shrink-0 hidden group-data-[vaul-drawer-direction=bottom]/drawer-content:block"
+			style="height: env(safe-area-inset-bottom, 0px);"
+		></div>
 	</DrawerPrimitive.Content>
 </DrawerPrimitive.Portal>

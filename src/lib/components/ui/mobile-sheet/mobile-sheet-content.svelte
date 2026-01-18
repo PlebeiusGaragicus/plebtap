@@ -59,10 +59,9 @@
 	></div>
 
 	<!-- Sheet content - full screen with safe area padding -->
-	<!-- Uses bg-glass-compatible for iOS Safari Liquid Glass effect compatibility -->
 	<div
 		class={cn(
-			"fixed inset-0 z-50 flex flex-col bg-glass-compatible",
+			"fixed inset-0 z-50 flex flex-col bg-background",
 			className
 		)}
 		transition:fly={{ y: "100%", duration: 300 }}
@@ -72,7 +71,7 @@
 		<!-- Safe area container - applies Apple's app-shell pattern -->
 		<!-- Background extends edge-to-edge, content padded inside safe areas -->
 		<div
-			class="flex flex-1 flex-col min-h-0"
+			class="flex flex-1 flex-col overflow-hidden"
 			style="
 				padding-top: env(safe-area-inset-top, 0px);
 				padding-bottom: env(safe-area-inset-bottom, 0px);
