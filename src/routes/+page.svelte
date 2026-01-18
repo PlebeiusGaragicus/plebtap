@@ -198,7 +198,7 @@
 
 	<!-- Component Demo -->
 	<div class="mb-2 rounded-lg border p-6">
-		<h2 class="mb-4 text-2xl font-semibold">Component</h2>
+		<!-- <h2 class="mb-4 text-2xl font-semibold">Component</h2> -->
 		<div class="flex flex-col items-center gap-4">
 			<Plebtap />
 		</div>
