@@ -122,32 +122,26 @@
 
 /* iOS Safari safe area support for Liquid Glass */
 /* 
- * On iOS Safari with the floating tab bar (Liquid Glass), content at the bottom
- * of the screen can be obscured. We use safe-area-inset-bottom to add padding
- * that lifts interactive elements above the tab bar.
+ * On iOS 26+ Safari with the floating tab bar (Liquid Glass), content at the bottom
+ * of the screen can be obscured. The env(safe-area-inset-bottom) value is often 
+ * unreliable (returns 0), so we add a fixed 34px buffer as a fallback.
+ * 34px ≈ home indicator (20px) + floating tab bar overlap (14px)
  */
 
-/* Drawer content - add padding at the bottom for safe area */
+/* Drawer content - add padding at the bottom for safe area with fixed buffer */
 [data-slot="drawer-content"][data-vaul-drawer-direction="bottom"] {
-  /* Fallback for older iOS (< 11.2) */
-  padding-bottom: constant(safe-area-inset-bottom);
-  /* Modern iOS (11.2+) */
-  padding-bottom: env(safe-area-inset-bottom);
+  /* Fixed buffer approach for iOS 26 where env() often fails */
+  /* Use calc with fallback - 34px is approx home indicator + floating bar */
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 34px);
 }
 
 /* Also ensure the scrollable content inside has room to scroll past the safe area */
-[data-slot="drawer-content"] [data-slot="scroll-area-viewport"] {
-  /* The viewport needs to allow its content to scroll fully */
-}
-
 [data-slot="drawer-content"] [data-slot="scroll-area-viewport"] > div:first-child {
   /* Add padding to the first div inside scroll viewport (the content wrapper) */
-  padding-bottom: constant(safe-area-inset-bottom);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 34px);
 }
 
-/* General utility class for safe area bottom padding */
+/* General utility class for safe area bottom padding with fixed buffer */
 .safe-area-pb {
-  padding-bottom: constant(safe-area-inset-bottom);
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 34px);
 }

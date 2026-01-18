@@ -63,7 +63,7 @@
 	}
 </script>
 
-<ViewContainer className="p-4 max-h-[55vh]">
+<ViewContainer className="p-4 max-h-[55dvh]">
 	<!-- Transactions List View -->
 	<div class="mb-4 flex items-center justify-between">
 		<div class="flex items-center">
@@ -85,7 +85,7 @@
 	</div>
 
 	<ScrollArea>
-		<div class="max-h-[60vh] space-y-1">
+		<div class="max-h-[60dvh] space-y-1">
 			{#if $isLoadingTransactions}
 				<div class="flex items-center justify-center py-8">
 					<LoaderCircle class="h-6 w-6 animate-spin text-primary" />
