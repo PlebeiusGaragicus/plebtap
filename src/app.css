@@ -121,28 +121,27 @@
 }
 
 /* ============================================
-   iOS Safari Safe Area Support (Liquid Glass)
+   iOS Safari Safe Area Utility Classes
    ============================================
-   Similar to #app-shell pattern from plebchat-site:
-   - Drawer content wrapper handles safe area padding
-   - Content inside uses simple padding like pb-6
-   - Background extends edge-to-edge
+   Following Apple's Human Interface Guidelines:
+   - Background extends edge-to-edge (into safe areas)
+   - Interactive content is padded inside safe areas
+   
+   The MobileSheet component handles safe areas internally.
+   These utility classes are available for other components.
 */
 
-/* Drawer content - extends to bottom, content padded inside */
-/* For liquid glass: drawer background extends into Safari's tab bar area */
-/* Content is padded inside so text stays above the obscured area */
-[data-slot="drawer-content"][data-vaul-drawer-direction="bottom"] {
-  /* Keep at bottom - drawer bg extends into Safari tab bar for liquid glass */
-  /* Generous padding pushes content above Safari's ~50px tab bar */
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 3.5rem);
-}
-
-/* Utility classes for safe area padding */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-.safe-bottom-extra {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-insets {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
