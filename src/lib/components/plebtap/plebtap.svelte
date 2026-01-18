@@ -102,7 +102,7 @@
 			<DrawerTrigger>
 				<PlebtapTrigger />
 			</DrawerTrigger>
-			<DrawerContent class="h-[85vh]">
+			<DrawerContent class="h-[90vh]">
 				<ViewRouter />
 			</DrawerContent>
 		</Drawer>
