@@ -87,7 +87,8 @@
 {:else} 
 <!-- Drawer -->
 	<!-- For drawer: fixed height container with scrolling content and max width -->
-	<div class="flex min-h-[70vh] max-h-full justify-center overflow-y-auto">
+	<!-- safe-area-pb class adds padding-bottom for iOS Safari Liquid Glass -->
+	<div class="flex min-h-[70vh] max-h-full justify-center overflow-y-auto safe-area-pb">
 		<div class="mx-auto w-full max-w-md">
 			<div class={$inTransition ? 'relative' : 'h-full'}>
 				{#each Object.entries(viewComponents) as [name, Component]}
