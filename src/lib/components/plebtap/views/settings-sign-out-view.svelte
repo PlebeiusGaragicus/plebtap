@@ -29,15 +29,15 @@
 	}
 </script>
 
-<ViewContainer className="p-0">
-	<div class="mb-2 flex items-center p-2">
+<ViewContainer>
+	<div class="flex items-center p-2">
 		<Button variant="ghost" size="icon" onclick={() => navigateTo('settings')} class="mr-2">
 			<ChevronLeft class="h-4 w-4" />
 		</Button>
 		<h3 class="text-lg font-medium text-destructive">Sign Out</h3>
 	</div>
 
-	<div class="space-y-4 px-4">
+	<div class="flex-1 space-y-4 px-4">
 				<p class="text-sm text-muted-foreground">
 					You're about to sign out of PlebTap.
 				</p>

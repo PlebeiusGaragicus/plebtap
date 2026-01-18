@@ -11,7 +11,7 @@
 </script>
 
 <div
-	class="w-full {className}"
+	class="flex h-full w-full flex-col {className}"
 	in:fly={{ x: $direction * animationDistance, duration: animationDuration }}
 	out:fly={{ x: $direction * -animationDistance, duration: animationDuration }}
 	on:introstart={startTransition}

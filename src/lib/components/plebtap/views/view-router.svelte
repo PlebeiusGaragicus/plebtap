@@ -86,17 +86,15 @@
 	</div>
 {:else} 
 <!-- Mobile Sheet - full screen, safe areas handled by MobileSheetContent -->
-	<div class="flex h-full flex-col overflow-y-auto">
-		<div class="mx-auto w-full max-w-md flex-1">
-			<div class={$inTransition ? 'relative h-full' : 'h-full'}>
-				{#each Object.entries(viewComponents) as [name, Component]}
-					{#if $currentView === name}
-						<div class={$inTransition ? 'absolute inset-0' : ''}>
-							<svelte:component this={Component} />
-						</div>
-					{/if}
-				{/each}
-			</div>
+	<div class="mx-auto flex h-full w-full max-w-md flex-col">
+		<div class={$inTransition ? 'relative flex-1' : 'flex flex-1 flex-col'}>
+			{#each Object.entries(viewComponents) as [name, Component]}
+				{#if $currentView === name}
+					<div class={$inTransition ? 'absolute inset-0' : 'flex flex-1 flex-col'}>
+						<svelte:component this={Component} />
+					</div>
+				{/if}
+			{/each}
 		</div>
 	</div>
 {/if}

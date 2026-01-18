@@ -86,8 +86,8 @@
 				</div>
 			{/if}
 
-			<!-- Content area - scrollable -->
-			<div class="flex-1 overflow-y-auto">
+			<!-- Content area - fills remaining space, scrollable -->
+			<div class="flex flex-1 flex-col overflow-y-auto">
 				{@render children()}
 			</div>
 		</div>

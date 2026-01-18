@@ -28,16 +28,15 @@
 	}
 </script>
 
-<ViewContainer className="p-0">
-	<div class="mb-2 flex items-center p-2">
+<ViewContainer>
+	<div class="flex items-center p-2">
 		<Button variant="ghost" size="icon" onclick={() => navigateTo('main')} class="mr-2">
 			<ChevronLeft class="h-4 w-4" />
 		</Button>
 		<h3 class="text-lg font-medium">Settings</h3>
 	</div>
 
-	<!-- Settings content - no height constraints, parent handles scrolling -->
-	<div class="px-4">
+	<div class="flex-1 px-4">
 			<!-- Theme toggle -->
 			<div class="flex items-center justify-between border-b py-4">
 				<div class="flex items-center space-x-2">
