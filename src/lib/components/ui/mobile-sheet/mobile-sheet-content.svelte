@@ -59,9 +59,10 @@
 	></div>
 
 	<!-- Sheet content - full screen with safe area padding -->
+	<!-- Uses bg-glass-compatible for iOS Safari Liquid Glass effect compatibility -->
 	<div
 		class={cn(
-			"fixed inset-0 z-50 flex flex-col bg-background",
+			"fixed inset-0 z-50 flex flex-col bg-glass-compatible",
 			className
 		)}
 		transition:fly={{ y: "100%", duration: 300 }}
