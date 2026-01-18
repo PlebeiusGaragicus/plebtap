@@ -11,7 +11,7 @@
 </script>
 
 <div
-	class="w-full pb-[env(safe-area-inset-bottom)] {className}"
+	class="w-full {className}"
 	in:fly={{ x: $direction * animationDistance, duration: animationDuration }}
 	out:fly={{ x: $direction * -animationDistance, duration: animationDuration }}
 	on:introstart={startTransition}
