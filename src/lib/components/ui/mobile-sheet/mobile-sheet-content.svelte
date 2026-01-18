@@ -72,7 +72,7 @@
 		<!-- Safe area container - applies Apple's app-shell pattern -->
 		<!-- Background extends edge-to-edge, content padded inside safe areas -->
 		<div
-			class="flex flex-1 flex-col overflow-hidden"
+			class="flex flex-1 flex-col min-h-0"
 			style="
 				padding-top: env(safe-area-inset-top, 0px);
 				padding-bottom: env(safe-area-inset-bottom, 0px);
