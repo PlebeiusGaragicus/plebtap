@@ -1,4 +1,4 @@
-<!-- src/lib/components/nostr/NostrTransactionDetailsView.svelte (updated) -->
+<!-- src/lib/components/plebtap/views/transaction-details-view.svelte -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { formatDistanceToNow } from 'date-fns';
@@ -10,16 +10,16 @@
 	} from '$lib/stores/wallet.js';
 	import { navigateTo, context } from '$lib/stores/navigation.js';
 	import { formatTransactionDescription } from '$lib/utils/tx.js';
-    import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-    import ArrowDownLeft from '@lucide/svelte/icons/arrow-down-left';
-    import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
-    import Info from '@lucide/svelte/icons/info';
-    import CalendarClock from '@lucide/svelte/icons/calendar-clock';
-    import Undo from '@lucide/svelte/icons/undo';
+	import ArrowDownLeft from '@lucide/svelte/icons/arrow-down-left';
+	import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
+	import Info from '@lucide/svelte/icons/info';
+	import CalendarClock from '@lucide/svelte/icons/calendar-clock';
+	import Undo from '@lucide/svelte/icons/undo';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
-    import { Alert, AlertDescription } from '$lib/components/ui/alert/index.js'
+	import { Alert, AlertDescription } from '$lib/components/ui/alert/index.js';
 
 	// Props for transaction details
 	let tx: NDKCashuWalletTx = $context.tx!;
@@ -82,21 +82,9 @@
 	$: displayDescription = formatTransactionDescription(transaction?.description || '');
 </script>
 
-<ViewContainer className="p-4">
-	<!-- Transaction Detail View -->
-	<div class="mb-4 flex items-center">
-		<Button
-			variant="ghost"
-			size="icon"
-			onclick={() => navigateTo($context.sourceView)}
-			class="mr-2"
-		>
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Transaction Details</h3>
-	</div>
-
-	<div class="space-y-4">
+<ViewContainer>
+	<ViewLayout title="Transaction Details" backTo={$context.sourceView}>
+		<div class="space-y-4">
 		{#if transaction}
 			<!-- Header with transaction type and amount -->
 			<div class="flex items-center justify-between">
@@ -233,5 +221,6 @@
 				<p>Transaction details not available</p>
 			</div>
 		{/if}
-	</div>
+		</div>
+	</ViewLayout>
 </ViewContainer>

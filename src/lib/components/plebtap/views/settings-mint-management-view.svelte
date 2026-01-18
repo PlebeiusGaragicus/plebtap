@@ -1,15 +1,14 @@
 <!-- src/lib/components/plebtap/views/settings-mint-management-view.svelte -->
 <script lang="ts">
-	import { navigateTo } from '$lib/stores/navigation.js';
 	import { consolidateTokens } from '$lib/stores/wallet.js';
 
 	import { Alert, AlertDescription } from '$lib/components/ui/alert/index.js';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 	import MintList from '../settings/mint-list.svelte';
 
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 
 	// Simple state for the consolidation process
@@ -34,42 +33,37 @@
 </script>
 
 <ViewContainer>
-	<div class="flex items-center p-2">
-		<Button variant="ghost" size="icon" onclick={() => navigateTo('settings')} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Mint Management</h3>
-	</div>
+	<ViewLayout title="Mint Management" backTo="settings">
+		<div class="space-y-3">
+			<p class="text-sm text-muted-foreground">
+				Mints are servers that issue ecash tokens. Add trusted mints to send, receive, and manage
+				your Cashu tokens.
+			</p>
+			<MintList />
+			<Separator />
+			<p class="text-sm text-muted-foreground">
+				Consolidation combines your tokens and removes spent ones for better wallet performance.
+			</p>
 
-	<div class="flex-1 space-y-3 px-4">
-				<p class="text-sm text-muted-foreground">
-					Mints are servers that issue ecash tokens. Add trusted mints to send, receive, and manage
-					your Cashu tokens.
-				</p>
-				<MintList />
-				<Separator />
-				<p class="text-sm text-muted-foreground">
-					Consolidation combines your tokens and removes spent ones for better wallet performance.
-				</p>
+			<!-- Simple consolidation button with minimal feedback -->
+			<Button
+				disabled={isConsolidating}
+				variant="outline"
+				class="w-full"
+				onclick={handleConsolidate}
+			>
+				<RefreshCw class={isConsolidating ? 'mr-2 animate-spin' : 'mr-2'} />
+				{isConsolidating ? 'Consolidating tokens...' : 'Consolidate Tokens'}
+			</Button>
 
-				<!-- Simple consolidation button with minimal feedback -->
-				<Button
-					disabled={isConsolidating}
-					variant="outline"
-					class="w-full"
-					onclick={handleConsolidate}
-				>
-					<RefreshCw class={isConsolidating ? 'mr-2 animate-spin' : 'mr-2'} />
-					{isConsolidating ? 'Consolidating tokens...' : 'Consolidate Tokens'}
-				</Button>
-
-				<!-- Error message -->
-				{#if consolidateError}
-					<Alert class="mt-2 border-red-200 bg-red-50">
-						<AlertDescription class="text-red-700">
-							{consolidateError}
-						</AlertDescription>
-					</Alert>
-				{/if}
-	</div>
+			<!-- Error message -->
+			{#if consolidateError}
+				<Alert class="mt-2 border-red-200 bg-red-50">
+					<AlertDescription class="text-red-700">
+						{consolidateError}
+					</AlertDescription>
+				</Alert>
+			{/if}
+		</div>
+	</ViewLayout>
 </ViewContainer>

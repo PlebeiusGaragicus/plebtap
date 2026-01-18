@@ -61,24 +61,21 @@ export type NavigationContext = {
 
 // Create the stores
 export const currentView = writable<ViewName>('login');
-export const isUserMenuOpen = writable<boolean>(false)
+export const isUserMenuOpen = writable<boolean>(false);
 export const direction = writable<number>(1);
 export const context = writable<NavigationContext>({ sourceView: 'login' });
-export const inTransition = writable<boolean>(false);
 
 
 
 export function initNavigation() {
-  const d = debug.extend('initNavigation')
-  //inTransition.set(false)
+  const d = debug.extend('initNavigation');
   if (get(isLoggedIn)) {
-    d.log("User is logged in, current view set to main")
-    currentView.set('main')
+    d.log("User is logged in, current view set to main");
+    currentView.set('main');
   } else {
-    d.log("User is not logged in, current view set to login")
-    currentView.set('login')
+    d.log("User is not logged in, current view set to login");
+    currentView.set('login');
   }
-  //inTransition.set(false)
 }
 
 /**
@@ -118,42 +115,13 @@ export function navigateTo(
 }
 
 export function openMenu(view?: ViewName) {
-  const d = debug.extend('openMenu')
-  inTransition.set(false)
-
-  d.log("reset current view")
+  const d = debug.extend('openMenu');
+  d.log("reset current view");
   navigateTo('reset');
-  if(view) { 
-    d.log('setting current view to ', view)
+  if (view) {
+    d.log('setting current view to ', view);
     currentView.set(view);
   }
-}
-
-// export function openMenuAtCurrentView() {
-//   inTransition.set(false)
-
-//   const current = get(currentView)
-
-//   console.log("[openMenuAt] navigate to reset")
-//   navigateTo('reset');
-//   console.log('[openMenuAt] set current view to ', current)
-//   currentView.set(current)
-// }
-
-/**
- * Start a view transition animation
- */
-export function startTransition() {
-  // console.log("start transition")
-  inTransition.set(true);
-}
-
-/**
- * End a view transition animation
- */
-export function endTransition() {
-  // console.log('end transition')
-  inTransition.set(false);
 }
 
 /**

@@ -8,21 +8,21 @@
 	import { scanResult } from '$lib/stores/scan-store.js';
 	import { navigateTo } from '$lib/stores/navigation.js';
 
-    import { Tabs, TabsList, TabsTrigger, TabsContent } from "$lib/components/ui/tabs/index.js";
+	import { Tabs, TabsList, TabsTrigger, TabsContent } from '$lib/components/ui/tabs/index.js';
 	import { wallet, createDeposit, receiveToken, addMint } from '$lib/stores/wallet.js';
 
-    import Copy from '@lucide/svelte/icons/copy';
-    import LoaderCircle from '@lucide/svelte/icons/loader-circle';
-    import CircleAlert from '@lucide/svelte/icons/circle-alert';
-    import CircleCheck from '@lucide/svelte/icons/circle-check';
-    import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-    import Banknote from '@lucide/svelte/icons/banknote';
-    import Zap from '@lucide/svelte/icons/zap';
-    import QrCode from '@lucide/svelte/icons/qr-code';
-    import ClipboardPaste from '@lucide/svelte/icons/clipboard-paste';
-    import ShieldCheck from '@lucide/svelte/icons/shield-check';
-    import ShieldAlert from '@lucide/svelte/icons/shield-alert';
+	import Copy from '@lucide/svelte/icons/copy';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import CircleAlert from '@lucide/svelte/icons/circle-alert';
+	import CircleCheck from '@lucide/svelte/icons/circle-check';
+	import Banknote from '@lucide/svelte/icons/banknote';
+	import Zap from '@lucide/svelte/icons/zap';
+	import QrCode from '@lucide/svelte/icons/qr-code';
+	import ClipboardPaste from '@lucide/svelte/icons/clipboard-paste';
+	import ShieldCheck from '@lucide/svelte/icons/shield-check';
+	import ShieldAlert from '@lucide/svelte/icons/shield-alert';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import Label from '$lib/components/ui/label/label.svelte';
 	import Input from '$lib/components/ui/input/input.svelte';
@@ -288,14 +288,9 @@
 	});
 </script>
 
-<ViewContainer className="p-4">
-	<div class="mb-4 flex items-center">
-		<Button variant="ghost" size="icon" onclick={() => navigateTo('main')} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Receive Sats</h3>
-	</div>
-	<div class="space-y-4">
+<ViewContainer>
+	<ViewLayout title="Receive Sats" backTo="main">
+		<div class="space-y-4">
 		<Tabs value={activeTab} onValueChange={(value) => (activeTab = value)} class="w-full">
 			<TabsList class="grid w-full grid-cols-2">
 				<TabsTrigger value="lightning" class="flex items-center justify-center">
@@ -492,5 +487,6 @@
 				<p class="text-sm">{error}</p>
 			</div>
 		{/if}
-	</div>
+		</div>
+	</ViewLayout>
 </ViewContainer>

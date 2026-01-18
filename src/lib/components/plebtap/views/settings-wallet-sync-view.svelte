@@ -1,6 +1,5 @@
 <!-- src/lib/components/plebtap/views/settings-wallet-sync-view.svelte -->
 <script lang="ts">
-	import { navigateTo } from '$lib/stores/navigation.js';
 	import { createWalletRelaySync, RelaySync } from '$lib/stores/relaySync.svelte.js';
 	import { relays, getNDK, currentUser } from '$lib/stores/nostr.js';
 	import { wallet } from '$lib/stores/wallet.js';
@@ -8,9 +7,9 @@
 
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 	import SyncList from '../negentropy/sync-list.svelte';
 
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 	import Database from '@lucide/svelte/icons/database';
 
@@ -57,38 +56,33 @@
 </script>
 
 <ViewContainer>
-	<div class="flex items-center p-2">
-		<Button variant="ghost" size="icon" onclick={() => navigateTo('settings')} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Wallet Sync</h3>
-	</div>
+	<ViewLayout title="Wallet Sync" backTo="settings">
+		<div class="space-y-4">
+			<div class="space-y-2">
+				<p class="text-sm text-muted-foreground">
+					Sync your wallet events across relays using Negentropy for efficient reconciliation. This
+					ensures your wallet state is consistent across all connected relays.
+				</p>
+				<p class="text-xs text-muted-foreground">
+					Status: {getSyncSummary()}
+				</p>
+			</div>
 
-	<div class="flex-1 space-y-4 px-4">
-				<div class="space-y-2">
-					<p class="text-sm text-muted-foreground">
-						Sync your wallet events across relays using Negentropy for efficient reconciliation. This
-						ensures your wallet state is consistent across all connected relays.
-					</p>
-					<p class="text-xs text-muted-foreground">
-						Status: {getSyncSummary()}
-					</p>
-				</div>
+			<SyncList {relaySyncs} />
 
-				<SyncList {relaySyncs} />
-
-				<Button
-					onclick={handleSyncAll}
-					disabled={isSyncing || !isLoaded || relaySyncs.length === 0}
-					class="w-full"
-				>
-					{#if isSyncing}
-						<RefreshCw class="mr-2 h-4 w-4 animate-spin" />
-						Syncing... ({activeSyncs}/{relaySyncs.length})
-					{:else}
-						<Database class="mr-2 h-4 w-4" />
-						Sync All Relays
-					{/if}
-				</Button>
-	</div>
+			<Button
+				onclick={handleSyncAll}
+				disabled={isSyncing || !isLoaded || relaySyncs.length === 0}
+				class="w-full"
+			>
+				{#if isSyncing}
+					<RefreshCw class="mr-2 h-4 w-4 animate-spin" />
+					Syncing... ({activeSyncs}/{relaySyncs.length})
+				{:else}
+					<Database class="mr-2 h-4 w-4" />
+					Sync All Relays
+				{/if}
+			</Button>
+		</div>
+	</ViewLayout>
 </ViewContainer>

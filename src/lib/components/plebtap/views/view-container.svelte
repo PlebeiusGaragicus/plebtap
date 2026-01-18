@@ -1,23 +1,25 @@
-<!-- src/lib/components/ui/ViewContainer.svelte -->
+<!-- src/lib/components/plebtap/views/view-container.svelte -->
+<!-- Handles view transition animations only -->
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { fly } from 'svelte/transition';
-	import { startTransition, endTransition, direction } from '$lib/stores/navigation.js';
+	import { direction } from '$lib/stores/navigation.js';
 
-	// Allow passing additional classes
-	export let className = '';
-	// Allow customizing animation options
-	export let animationDuration = 300;
-	export let animationDistance = 300;
+	interface Props {
+		children: Snippet;
+		/** Animation duration in ms */
+		duration?: number;
+		/** Animation slide distance in px */
+		distance?: number;
+	}
+
+	let { children, duration = 300, distance = 300 }: Props = $props();
 </script>
 
 <div
-	class="flex h-full w-full flex-col {className}"
-	in:fly={{ x: $direction * animationDistance, duration: animationDuration }}
-	out:fly={{ x: $direction * -animationDistance, duration: animationDuration }}
-	on:introstart={startTransition}
-	on:outrostart={startTransition}
-	on:introend={endTransition}
-	on:outroend={endTransition}
+	class="h-full w-full"
+	in:fly={{ x: $direction * distance, duration }}
+	out:fly={{ x: $direction * -distance, duration }}
 >
-	<slot />
+	{@render children()}
 </div>

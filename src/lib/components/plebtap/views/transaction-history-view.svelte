@@ -1,4 +1,4 @@
-<!-- src/lib/components/nostr/NostrTransactionsView.svelte -->
+<!-- src/lib/components/plebtap/views/transaction-history-view.svelte -->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { formatDistanceToNow } from 'date-fns';
@@ -13,12 +13,12 @@
 	} from '$lib/stores/wallet.js';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 
-    import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-    import LoaderCircle from '@lucide/svelte/icons/loader-circle';
-    import ArrowDownLeft from '@lucide/svelte/icons/arrow-down-left';
-    import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
-    import RefreshCw from '@lucide/svelte/icons/refresh-cw';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import ArrowDownLeft from '@lucide/svelte/icons/arrow-down-left';
+	import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
+	import RefreshCw from '@lucide/svelte/icons/refresh-cw';
 
 	// Local state
 	let refreshing = false;
@@ -62,28 +62,29 @@
 	}
 </script>
 
-<ViewContainer className="p-4">
-	<!-- Transactions List View -->
-	<div class="mb-4 flex items-center justify-between">
-		<div class="flex items-center">
-			<Button variant="ghost" size="icon" onclick={() => navigateTo('main')} class="mr-2">
-				<ChevronLeft class="h-4 w-4" />
-			</Button>
-			<h3 class="text-lg font-medium">Transaction History</h3>
-		</div>
+<ViewContainer>
+	<ViewLayout title="Transaction History" backTo="main" noPadding>
+		{#snippet header()}
+			<div class="flex shrink-0 items-center justify-between p-2">
+				<div class="flex items-center gap-2">
+					<Button variant="ghost" size="icon" onclick={() => navigateTo('main')}>
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+					</Button>
+					<h3 class="text-lg font-medium">Transaction History</h3>
+				</div>
+				<Button
+					variant="ghost"
+					size="icon"
+					onclick={handleRefresh}
+					disabled={$isLoadingTransactions || refreshing}
+					aria-label="Refresh transaction history"
+				>
+					<RefreshCw class={`h-4 w-4 ${$isLoadingTransactions || refreshing ? 'animate-spin' : ''}`} />
+				</Button>
+			</div>
+		{/snippet}
 
-		<Button
-			variant="ghost"
-			size="icon"
-			onclick={handleRefresh}
-			disabled={$isLoadingTransactions || refreshing}
-			aria-label="Refresh transaction history"
-		>
-			<RefreshCw class={`h-4 w-4 ${$isLoadingTransactions || refreshing ? 'animate-spin' : ''}`} />
-		</Button>
-	</div>
-
-	<div class="space-y-1">
+		<div class="space-y-1 px-4">
 			{#if $isLoadingTransactions}
 				<div class="flex items-center justify-center py-8">
 					<LoaderCircle class="h-6 w-6 animate-spin text-primary" />
@@ -135,5 +136,6 @@
 					{/if}
 				{/each}
 			{/if}
-	</div>
+		</div>
+	</ViewLayout>
 </ViewContainer>

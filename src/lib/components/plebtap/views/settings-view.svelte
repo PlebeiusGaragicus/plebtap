@@ -1,15 +1,13 @@
-<!-- src/lib/components/nostr/NostrSettingsView.svelte -->
+<!-- src/lib/components/plebtap/views/settings-view.svelte -->
 <script lang="ts">
 	import { mode, setMode } from 'mode-watcher';
-	import { navigateTo } from '$lib/stores/navigation.js';
 
-	import Button from '$lib/components/ui/button/button.svelte';
 	import Switch from '$lib/components/ui/switch/switch.svelte';
-
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
+	import SettingsRow from '../settings/settings-row.svelte';
+	import SettingsNavRow from '../settings/settings-nav-row.svelte';
 
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 	import Moon from '@lucide/svelte/icons/moon';
 	import Sun from '@lucide/svelte/icons/sun';
 	import MonitorSmartphone from '@lucide/svelte/icons/monitor-smartphone';
@@ -29,103 +27,18 @@
 </script>
 
 <ViewContainer>
-	<div class="flex items-center p-2">
-		<Button variant="ghost" size="icon" onclick={() => navigateTo('main')} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Settings</h3>
-	</div>
+	<ViewLayout title="Settings" backTo="main" noPadding contentClass="px-4">
+		<!-- Theme toggle -->
+		<SettingsRow icon={mode.current === 'dark' ? Moon : Sun} label="Dark Mode">
+			<Switch checked={mode.current === 'dark'} onCheckedChange={toggleTheme} />
+		</SettingsRow>
 
-	<div class="flex-1 px-4">
-			<!-- Theme toggle -->
-			<div class="flex items-center justify-between border-b py-4">
-				<div class="flex items-center space-x-2">
-					{#if mode.current === 'dark'}
-						<Moon />
-					{:else}
-						<Sun />
-					{/if}
-					<span class="text">Dark Mode</span>
-				</div>
-				<Switch checked={mode.current === 'dark'} onCheckedChange={toggleTheme} />
-			</div>
-
-			<!-- Link New Device -->
-			<button
-				type="button"
-				class="flex w-full items-center justify-between border-b py-4 transition-colors hover:bg-muted/50"
-				onclick={() => navigateTo('settings-link-device')}
-			>
-				<div class="flex items-center gap-2">
-					<MonitorSmartphone class="h-5 w-5" />
-					<span>Link New Device</span>
-				</div>
-				<ChevronRight class="h-4 w-4 text-muted-foreground" />
-			</button>
-
-			<!-- Wallet Sync -->
-			<button
-				type="button"
-				class="flex w-full items-center justify-between border-b py-4 transition-colors hover:bg-muted/50"
-				onclick={() => navigateTo('settings-wallet-sync')}
-			>
-				<div class="flex items-center gap-2">
-					<Database class="h-5 w-5" />
-					<span>Wallet Sync</span>
-				</div>
-				<ChevronRight class="h-4 w-4 text-muted-foreground" />
-			</button>
-
-			<!-- Mint Management -->
-			<button
-				type="button"
-				class="flex w-full items-center justify-between border-b py-4 transition-colors hover:bg-muted/50"
-				onclick={() => navigateTo('settings-mint-management')}
-			>
-				<div class="flex items-center gap-2">
-					<Banknote class="h-5 w-5" />
-					<span>Mint Management</span>
-				</div>
-				<ChevronRight class="h-4 w-4 text-muted-foreground" />
-			</button>
-
-			<!-- Relay Management -->
-			<button
-				type="button"
-				class="flex w-full items-center justify-between border-b py-4 transition-colors hover:bg-muted/50"
-				onclick={() => navigateTo('settings-relay-management')}
-			>
-				<div class="flex items-center gap-2">
-					<Router class="h-5 w-5" />
-					<span>Relay Management</span>
-				</div>
-				<ChevronRight class="h-4 w-4 text-muted-foreground" />
-			</button>
-
-			<!-- Nostr Keys -->
-			<button
-				type="button"
-				class="flex w-full items-center justify-between border-b py-4 transition-colors hover:bg-muted/50"
-				onclick={() => navigateTo('settings-nostr-keys')}
-			>
-				<div class="flex items-center gap-2">
-					<Key class="h-5 w-5" />
-					<span>Nostr Keys</span>
-				</div>
-				<ChevronRight class="h-4 w-4 text-muted-foreground" />
-			</button>
-
-			<!-- Sign Out -->
-			<button
-				type="button"
-				class="flex w-full items-center justify-between py-4 transition-colors hover:bg-muted/50"
-				onclick={() => navigateTo('settings-sign-out')}
-			>
-				<div class="flex items-center gap-2 text-destructive">
-					<LogOut class="h-5 w-5" />
-					<span>Sign Out</span>
-				</div>
-				<ChevronRight class="h-4 w-4 text-muted-foreground" />
-			</button>
-	</div>
+		<!-- Navigation rows -->
+		<SettingsNavRow icon={MonitorSmartphone} label="Link New Device" to="settings-link-device" />
+		<SettingsNavRow icon={Database} label="Wallet Sync" to="settings-wallet-sync" />
+		<SettingsNavRow icon={Banknote} label="Mint Management" to="settings-mint-management" />
+		<SettingsNavRow icon={Router} label="Relay Management" to="settings-relay-management" />
+		<SettingsNavRow icon={Key} label="Nostr Keys" to="settings-nostr-keys" />
+		<SettingsNavRow icon={LogOut} label="Sign Out" to="settings-sign-out" variant="destructive" showBorder={false} />
+	</ViewLayout>
 </ViewContainer>

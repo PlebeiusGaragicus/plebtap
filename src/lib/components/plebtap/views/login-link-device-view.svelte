@@ -1,4 +1,4 @@
-<!-- src/lib/components/nostr/LinkDeviceLoginView.svelte -->
+<!-- src/lib/components/plebtap/views/login-link-device-view.svelte -->
 <script lang="ts">
 	import { navigateTo } from '$lib/stores/navigation.js';
 	import { scanResult } from '$lib/stores/scan-store.js';
@@ -9,14 +9,14 @@
 	} from '$lib/services/init.svelte';
 	import { decryptToSigner } from '$lib/utils/nip49.js';
 	import { onMount } from 'svelte';
-    import { InputOTP, InputOTPGroup, InputOTPSlot } from "$lib/components/ui/input-otp/index.js";
+	import { InputOTP, InputOTPGroup, InputOTPSlot } from '$lib/components/ui/input-otp/index.js';
 	import { REGEXP_ONLY_DIGITS } from 'bits-ui';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
-    import ChevronLeft from '@lucide/svelte/icons/chevron-left';
-    import Link from '@lucide/svelte/icons/link'
-    import Check from '@lucide/svelte/icons/check'
-    import QrCode from '@lucide/svelte/icons/qr-code'
+	import Link from '@lucide/svelte/icons/link';
+	import Check from '@lucide/svelte/icons/check';
+	import QrCode from '@lucide/svelte/icons/qr-code';
 
 	// State
 	let encryptedKey = '';
@@ -110,22 +110,16 @@
 	}
 </script>
 
-<ViewContainer className="space-y-4 p-4">
-	<div class="mb-4 flex items-center">
-		<Button variant="ghost" size="icon" onclick={() => navigateTo('login')} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Link from another device</h3>
-	</div>
+<ViewContainer>
+	<ViewLayout title="Link from another device" backTo="login">
+		<!-- Error message display -->
+		{#if errorMessage}
+			<div class="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700" role="alert">
+				<span class="block sm:inline">{errorMessage}</span>
+			</div>
+		{/if}
 
-	<!-- Error message display -->
-	{#if errorMessage}
-		<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-			<span class="block sm:inline">{errorMessage}</span>
-		</div>
-	{/if}
-
-	<div class="space-y-4">
+		<div class="space-y-4">
 		<!-- Instructions -->
 		<div class="text-sm text-muted-foreground">
 			Scan the QR code displayed on your primary device, then enter the 4-digit PIN to complete the
@@ -178,5 +172,6 @@
 				{isProcessing || appState.status === InitStatus.INITIALIZING ? 'Linking...' : 'Link Device'}
 			</Button>
 		{/if}
-	</div>
+		</div>
+	</ViewLayout>
 </ViewContainer>

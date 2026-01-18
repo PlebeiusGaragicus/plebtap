@@ -1,7 +1,7 @@
 <!-- src/lib/components/plebtap/views/view-router.svelte -->
+<!-- Simplified view router - container (Popover/MobileSheet) handles constraints -->
 <script lang="ts">
-	import { currentView, initNavigation, inTransition } from '$lib/stores/navigation.js';
-	import { MediaQuery } from 'svelte/reactivity';
+	import { currentView, initNavigation } from '$lib/stores/navigation.js';
 	import LoginGenerateKeyView from './login-generate-key-view.svelte';
 	import LoginImportMnemonicView from './login-import-mnemonic-view.svelte';
 	import LoginLinkDeviceView from './login-link-device-view.svelte';
@@ -23,10 +23,6 @@
 	import TransactionHistoryView from './transaction-history-view.svelte';
 	import OnboardingView from './onboarding-view.svelte';
 	import { loadNegentropy } from '$lib/utils/negentropy.js';
-	
-	export let isDesktop = new MediaQuery('(min-width: 768px)').current;
-	export let fullScreen = false;
-
 
 	initNavigation();
 	loadNegentropy();
@@ -56,45 +52,11 @@
 	};
 </script>
 
-<!-- Different wrapper based on container type -->
-{#if isDesktop}
-	<!-- For popover: original adaptive height behavior -->
-	<div class={`min-h-32 border border-yellow-500 ${$inTransition ? 'relative' : 'h-full '}`}>
-		{#each Object.entries(viewComponents) as [name, Component]}
-			{#if $currentView === name}
-				<div class={$inTransition ? 'absolute inset-0' : ''}>
-					<svelte:component this={Component} />
-				</div>
-			{/if}
-		{/each}
-	</div>
-{:else if fullScreen}
-<!-- wallet mode -->
-	<div class="flex  max-h-full justify-center overflow-y-auto border">
-		<div class="mx-auto w-full max-w-md">
-			<div class={$inTransition ? 'relative' : 'h-full'}>
-				{#each Object.entries(viewComponents) as [name, Component]}
-					{#if $currentView === name}
-						<!-- Fixed top position when in drawer -->
-						<div class={$inTransition ? 'absolute inset-0' : ''}>
-							<svelte:component this={Component} />
-						</div>
-					{/if}
-				{/each}
-			</div>
-		</div>
-	</div>
-{:else} 
-<!-- Mobile Sheet - full screen, safe areas handled by MobileSheetContent -->
-	<div class="mx-auto flex h-full w-full max-w-md flex-col">
-		<div class={$inTransition ? 'relative flex-1' : 'flex flex-1 flex-col'}>
-			{#each Object.entries(viewComponents) as [name, Component]}
-				{#if $currentView === name}
-					<div class={$inTransition ? 'absolute inset-0' : 'flex flex-1 flex-col'}>
-						<svelte:component this={Component} />
-					</div>
-				{/if}
-			{/each}
-		</div>
-	</div>
-{/if}
+<!-- Single unified layout - container handles sizing -->
+<div class="h-full w-full">
+	{#each Object.entries(viewComponents) as [name, Component]}
+		{#if $currentView === name}
+			<svelte:component this={Component} />
+		{/if}
+	{/each}
+</div>

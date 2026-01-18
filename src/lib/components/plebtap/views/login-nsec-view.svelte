@@ -1,12 +1,12 @@
-<!-- src/lib/components/nostr/NostrPrivateKeyView.svelte -->
+<!-- src/lib/components/plebtap/views/login-nsec-view.svelte -->
 <script lang="ts">
 	import { isConnecting, privateKeyLogin } from '$lib/stores/nostr.js';
 	import { appState, InitStatus } from '$lib/services/init.svelte.js';
 	import { navigateTo } from '$lib/stores/navigation.js';
 	import ViewContainer from './view-container.svelte';
+	import ViewLayout from './view-layout.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import CircleAlert from '@lucide/svelte/icons/circle-alert';
-	import ChevronLeft from '@lucide/svelte/icons/chevron-left';
 	import Input from '$lib/components/ui/input/input.svelte';
 	import { Alert, AlertTitle, AlertDescription } from '$lib/components/ui/alert/index.js';
 	import { AuthSetupDialog } from '$lib/components/plebtap/dialogs/index.js';
@@ -93,16 +93,10 @@
 	}
 </script>
 
-<ViewContainer className="p-4">
-	<div class="mb-4 flex items-center">
-		<Button variant="ghost" size="icon" onclick={() => navigateTo('login')} class="mr-2">
-			<ChevronLeft class="h-4 w-4" />
-		</Button>
-		<h3 class="text-lg font-medium">Private Key Login</h3>
-	</div>
-
-	<!-- Security Notice -->
-	<Alert class="mb-4">
+<ViewContainer>
+	<ViewLayout title="Private Key Login" backTo="login">
+		<!-- Security Notice -->
+		<Alert class="mb-4">
 		<CircleAlert class="h-4 w-4" />
 		<AlertTitle>Security Notice</AlertTitle>
 		<AlertDescription class="text-xs">
@@ -145,7 +139,8 @@
 						: 'Sign In'}
 			</Button>
 		</form>
-	</div>
+		</div>
+	</ViewLayout>
 </ViewContainer>
 
 <!-- Auth Setup Dialog -->
