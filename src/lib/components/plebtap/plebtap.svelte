@@ -11,7 +11,7 @@
 	import ViewRouter from './views/view-router.svelte';
 	import PlebtapTrigger from './plebtap-trigger.svelte';
 
-	import { Drawer, DrawerTrigger, DrawerContent }  from '$lib/components/ui/drawer/index.js';
+	import { MobileSheet, MobileSheetTrigger, MobileSheetContent } from '$lib/components/ui/mobile-sheet/index.js';
 	import { onMount } from 'svelte';
 	import { autoLogin, loginWithDecryptedKey } from '$lib/stores/nostr.js';
 	import { securityState } from '$lib/stores/security.svelte.js';
@@ -97,14 +97,15 @@
 			<PlebtapTrigger />
 		</div>
 	{:else}
-		<Drawer bind:open={$isUserMenuOpen} shouldScaleBackground>
-			<DrawerTrigger>
+		<!-- Mobile: Full-screen sheet instead of partial drawer -->
+		<MobileSheet bind:open={$isUserMenuOpen}>
+			<MobileSheetTrigger>
 				<PlebtapTrigger />
-			</DrawerTrigger>
-			<DrawerContent class="pt-0">
+			</MobileSheetTrigger>
+			<MobileSheetContent showCloseButton={true}>
 				<ViewRouter {isDesktop} />
-			</DrawerContent>
-		</Drawer>
+			</MobileSheetContent>
+		</MobileSheet>
 	{/if}
 {/if}
 

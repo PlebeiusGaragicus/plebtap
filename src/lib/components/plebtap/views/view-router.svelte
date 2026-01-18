@@ -85,15 +85,12 @@
 		</div>
 	</div>
 {:else} 
-<!-- Drawer -->
-	<!-- For drawer: min-height ensures content, pb-6 provides bottom clearance -->
-	<!-- safe area handled by drawer-content CSS -->
-	<div class="flex min-h-[60vh] flex-col justify-center overflow-y-auto pb-6">
-		<div class="mx-auto w-full max-w-md">
-			<div class={$inTransition ? 'relative' : 'h-full'}>
+<!-- Mobile Sheet - full screen, safe areas handled by MobileSheetContent -->
+	<div class="flex h-full flex-col overflow-y-auto">
+		<div class="mx-auto w-full max-w-md flex-1">
+			<div class={$inTransition ? 'relative h-full' : 'h-full'}>
 				{#each Object.entries(viewComponents) as [name, Component]}
 					{#if $currentView === name}
-						<!-- Fixed top position when in drawer -->
 						<div class={$inTransition ? 'absolute inset-0' : ''}>
 							<svelte:component this={Component} />
 						</div>
