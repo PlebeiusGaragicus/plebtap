@@ -4,10 +4,6 @@
 
 Stop reinventing the wheel for every Nostr app. PlebTap gives you a complete authentication and payment solution with both a ready-to-use UI component and a comprehensive programmatic API - drop it in your Svelte app and you're done.
 
-Follow me on [Nostr](https://njump.me/npub1strjxxh7fzhrvgkraew4fpt6ppu973sc3p9cm2mehl0naq22hars007wsf) to see me build this library and other stuff live on stream.
-[![NPM Version](https://img.shields.io/npm/v/plebtap)](https://www.npmjs.com/package/plebtap)
-[![License](https://img.shields.io/npm/l/plebtap)](https://github.com/cypherflow/plebtap/blob/main/LICENSE)
-
 > **⚠️ EXPERIMENTAL SOFTWARE**: PlebTap is in beta. Private keys are encrypted and stored in IndexedDB using PIN or biometric (WebAuthn) protection. You can also opt for insecure storage if preferred. *Use at your own risk and never store more sats than you're willing to lose.*
 
 

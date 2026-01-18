@@ -141,7 +141,7 @@
 				id="mnemonic"
 				bind:value={mnemonicInput}
 				placeholder="Enter your 12 or 24 word seed phrase..."
-				class="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+				class="min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring md:text-sm"
 				disabled={isLoading || appState.status === InitStatus.INITIALIZING}
 				autocomplete="off"
 				autocapitalize="off"
@@ -176,7 +176,7 @@
 						type="password"
 						bind:value={passphrase}
 						placeholder="Optional BIP-39 passphrase"
-						class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+						class="w-full rounded-md border border-input bg-background px-3 py-2 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring md:text-sm"
 						disabled={isLoading}
 						autocomplete="off"
 					/>
