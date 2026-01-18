@@ -123,14 +123,16 @@
 /* ============================================
    iOS Safari Safe Area Support (Liquid Glass)
    ============================================
-   For PWA mode (display: standalone), Apple's liquid glass effect requires:
-   1. viewport-fit=cover in <meta name="viewport">
-   2. apple-mobile-web-app-status-bar-style="black-translucent"
-   3. Safe area padding via env(safe-area-inset-*)
-   
-   The drawer component handles safe-area-inset-bottom directly.
-   Background extends edge-to-edge; content is padded inside.
+   Similar to #app-shell pattern from plebchat-site:
+   - Drawer content wrapper handles safe area padding
+   - Content inside uses simple padding like pb-6
+   - Background extends edge-to-edge
 */
+
+/* Drawer content - add safe area padding (like #app-shell) */
+[data-slot="drawer-content"][data-vaul-drawer-direction="bottom"] {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
 
 /* Utility classes for safe area padding */
 .safe-bottom {
@@ -139,12 +141,4 @@
 
 .safe-bottom-extra {
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
-}
-
-/* Safe area for full-height containers (like app shell) */
-.safe-area-insets {
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
 }
