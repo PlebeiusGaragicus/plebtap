@@ -129,9 +129,13 @@
    - Background extends edge-to-edge
 */
 
-/* Drawer content - add safe area padding (like #app-shell) */
+/* Drawer content - extends to bottom, content padded inside */
+/* For liquid glass: drawer background extends into Safari's tab bar area */
+/* Content is padded inside so text stays above the obscured area */
 [data-slot="drawer-content"][data-vaul-drawer-direction="bottom"] {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Keep at bottom - drawer bg extends into Safari tab bar for liquid glass */
+  /* Generous padding pushes content above Safari's ~50px tab bar */
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 3.5rem);
 }
 
 /* Utility classes for safe area padding */

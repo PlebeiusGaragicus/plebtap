@@ -86,9 +86,9 @@
 	</div>
 {:else} 
 <!-- Drawer -->
-	<!-- For drawer: flexbox containment with min-h-0 allows proper shrinking -->
-	<!-- pb-6 provides bottom padding; safe area handled by drawer-content CSS -->
-	<div class="flex flex-1 flex-col min-h-0 justify-center overflow-y-auto pb-6">
+	<!-- For drawer: min-height ensures content, pb-6 provides bottom clearance -->
+	<!-- safe area handled by drawer-content CSS -->
+	<div class="flex min-h-[60vh] flex-col justify-center overflow-y-auto pb-6">
 		<div class="mx-auto w-full max-w-md">
 			<div class={$inTransition ? 'relative' : 'h-full'}>
 				{#each Object.entries(viewComponents) as [name, Component]}
