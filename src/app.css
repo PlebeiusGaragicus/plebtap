@@ -145,3 +145,18 @@
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
 }
+
+/* ============================================
+   iOS Safari Liquid Glass Compatibility
+   ============================================
+   Slightly transparent background allows Safari's
+   OS-level Liquid Glass effects to blend properly.
+*/
+
+.bg-glass-compatible {
+  background-color: rgba(255, 255, 255, 0.97);
+}
+
+.dark .bg-glass-compatible {
+  background-color: rgba(20, 20, 20, 0.97);
+}
