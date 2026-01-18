@@ -87,8 +87,8 @@
 {:else} 
 <!-- Drawer -->
 	<!-- For drawer: fixed height container with scrolling content and max width -->
-	<!-- safe-area-pb class adds padding-bottom for iOS Safari Liquid Glass -->
-	<div class="flex min-h-[70dvh] max-h-full justify-center overflow-y-auto safe-area-pb">
+	<!-- pb-6 provides simple bottom padding; safe area handled by drawer-content CSS -->
+	<div class="flex min-h-[70vh] max-h-full justify-center overflow-y-auto pb-6">
 		<div class="mx-auto w-full max-w-md">
 			<div class={$inTransition ? 'relative' : 'h-full'}>
 				{#each Object.entries(viewComponents) as [name, Component]}
