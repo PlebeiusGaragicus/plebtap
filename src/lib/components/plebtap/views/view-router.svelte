@@ -87,8 +87,9 @@
 {:else} 
 <!-- Drawer -->
 	<!-- For drawer: fixed height container with scrolling content and max width -->
-	<!-- pb-6 provides simple bottom padding; safe area handled by drawer-content CSS -->
-	<div class="flex min-h-[70vh] max-h-full justify-center overflow-y-auto pb-6">
+	<!-- Uses svh (small viewport height) to exclude Safari's browser chrome -->
+	<!-- Safe area padding is handled by drawer-content component -->
+	<div class="flex min-h-[60svh] max-h-[75svh] justify-center overflow-y-auto">
 		<div class="mx-auto w-full max-w-md">
 			<div class={$inTransition ? 'relative' : 'h-full'}>
 				{#each Object.entries(viewComponents) as [name, Component]}

@@ -57,7 +57,7 @@
 	}
 </script>
 
-<ViewContainer className="p-0 max-h-[55vh] md:max-h-[60vh]">
+<ViewContainer className="p-0 max-h-[55svh] md:max-h-[60svh]">
 	<div class="mb-2 flex items-center p-2">
 		<Button variant="ghost" size="icon" onclick={() => navigateTo('settings')} class="mr-2">
 			<ChevronLeft class="h-4 w-4" />
@@ -66,7 +66,7 @@
 	</div>
 
 	<ScrollArea class="p-2">
-		<div class="max-h-[60vh] px-2 md:max-h-[50vh]">
+		<div class="max-h-[60svh] px-2 md:max-h-[50svh]">
 			<div class="space-y-4">
 				<div class="space-y-2">
 					<p class="text-sm text-muted-foreground">
