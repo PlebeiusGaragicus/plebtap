@@ -120,28 +120,25 @@
   }
 }
 
-/* iOS Safari safe area support for Liquid Glass */
-/* 
- * On iOS 26+ Safari with the floating tab bar (Liquid Glass), content at the bottom
- * of the screen can be obscured. The env(safe-area-inset-bottom) value is often 
- * unreliable (returns 0), so we add a fixed 34px buffer as a fallback.
- * 34px ≈ home indicator (20px) + floating tab bar overlap (14px)
- */
+/* ============================================
+   iOS Safari Safe Area Support (Liquid Glass)
+   ============================================
+   Similar to #app-shell pattern from plebchat-site:
+   - Drawer content wrapper handles safe area padding
+   - Content inside uses simple padding like pb-6
+   - Background extends edge-to-edge
+*/
 
-/* Drawer content - add padding at the bottom for safe area with fixed buffer */
+/* Drawer content - add safe area padding (like #app-shell) */
 [data-slot="drawer-content"][data-vaul-drawer-direction="bottom"] {
-  /* Fixed buffer approach for iOS 26 where env() often fails */
-  /* Use calc with fallback - 34px is approx home indicator + floating bar */
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 34px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Also ensure the scrollable content inside has room to scroll past the safe area */
-[data-slot="drawer-content"] [data-slot="scroll-area-viewport"] > div:first-child {
-  /* Add padding to the first div inside scroll viewport (the content wrapper) */
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 34px);
+/* Utility classes for safe area padding */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* General utility class for safe area bottom padding with fixed buffer */
-.safe-area-pb {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 34px);
+.safe-bottom-extra {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
 }
