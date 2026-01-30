@@ -13,6 +13,7 @@ declare global {
 // Vite environment variables
 interface ImportMetaEnv {
 	readonly VITE_CASHU_MINT_URL?: string;
+	readonly VITE_DEFAULT_RELAYS?: string;
 }
 
 interface ImportMeta {

@@ -73,11 +73,12 @@ export async function initNDK(signer: NDKSigner) {
   d.log('Creating new NDK instance or updating existing one');
   const ndk =
     existingNdk ||
+    const defaultRelays = import.meta.env.VITE_DEFAULT_RELAYS 
+      ? import.meta.env.VITE_DEFAULT_RELAYS.split(',').map(r => r.trim())
+      : ['wss://relay.cypherflow.ai'];
+
     new NDKSvelte({
-      explicitRelayUrls: [
-        'wss://relay.cypherflow.ai'
-        // Add other default relays as needed
-      ],
+      explicitRelayUrls: defaultRelays,
       enableOutboxModel: false,
       autoFetchUserMutelist: false,
       signer: signer,
