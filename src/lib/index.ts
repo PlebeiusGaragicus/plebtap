@@ -1,6 +1,6 @@
 // src/lib/index.ts
 // Main component
-import './styles.css';
+// Note: Consumers should import 'plebtap/styles.css' separately in their layout
 export { default as Plebtap } from '$lib/components/plebtap/plebtap.svelte';
 
 // Programmatic API
