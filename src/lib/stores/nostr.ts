@@ -70,20 +70,19 @@ export async function initNDK(signer: NDKSigner) {
     saveSig: true
   });
 
-  d.log('Creating new NDK instance or updating existing one');
-  const ndk =
-    existingNdk ||
-    const defaultRelays = import.meta.env.VITE_DEFAULT_RELAYS 
-      ? import.meta.env.VITE_DEFAULT_RELAYS.split(',').map(r => r.trim())
-      : ['wss://relay.cypherflow.ai'];
+  // Define default relays
+  const defaultRelays = import.meta.env.VITE_DEFAULT_RELAYS 
+    ? import.meta.env.VITE_DEFAULT_RELAYS.split(',').map((r: string) => r.trim())
+    : ['wss://relay.cypherflow.ai'];
 
-    new NDKSvelte({
-      explicitRelayUrls: defaultRelays,
-      enableOutboxModel: false,
-      autoFetchUserMutelist: false,
-      signer: signer,
-      cacheAdapter: dexieAdapter,
-    });
+  d.log('Creating new NDK instance or updating existing one');
+  const ndk = existingNdk || new NDKSvelte({
+    explicitRelayUrls: defaultRelays,
+    enableOutboxModel: false,
+    autoFetchUserMutelist: false,
+    signer: signer,
+    cacheAdapter: dexieAdapter,
+  });
 
   // Update stores (early to ensure UI can display loading state)
   d.log('Updating NDK and user stores');
