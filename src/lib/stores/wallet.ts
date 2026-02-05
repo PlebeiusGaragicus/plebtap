@@ -17,7 +17,7 @@ import {
   type LnPaymentInfo,
   type NDKSubscription
 } from '@nostr-dev-kit/ndk';
-import { getEncodedTokenV4 } from '@cashu/cashu-ts';
+import { getEncodedTokenV4, getDecodedToken } from '@cashu/cashu-ts';
 import { getNDK, ndkInstance } from './nostr.js';
 import { validateMint } from '../utils/validateMint.js';
 import { createDebug } from '$lib/utils/debug.js';
@@ -37,6 +37,28 @@ export const walletTransactions = writable<NDKCashuWalletTx[]>([]);
 export const isWalletReady = writable<boolean>(false);
 export const isInitializingWallet = writable<boolean>(false);
 export const isLoadingTransactions = writable<boolean>(false);
+
+// =============================================================================
+// PlebChat Credits - Unredeemed refund proofs stored locally
+// These avoid mint redemption fees and can be reused for future payments
+// =============================================================================
+
+const CREDITS_STORAGE_KEY = 'plebchat_credits';
+
+export interface PlebChatCredit {
+  proofs: any[];      // Deserialized proofs from token
+  mintUrl: string;    // Mint URL these proofs belong to
+  amount: number;     // Total amount in sats
+  receivedAt: number; // Timestamp when received
+}
+
+// Store for PlebChat credits (unredeemed refund proofs)
+export const plebchatCredits = writable<PlebChatCredit[]>([]);
+
+// Derived store for total credit balance
+export const creditBalance = derived(plebchatCredits, ($credits) => 
+  $credits.reduce((sum, c) => sum + c.amount, 0)
+);
 
 // Read from Vite env variable, fallback to production mint
 export const DEFAULT_MINTS = [
@@ -130,6 +152,10 @@ export async function initWallet(isNewUser: boolean = false) {
       d.log('Consolidating tokens...');
 
       await consolidateTokens();
+      
+      // Load PlebChat credits from storage
+      loadCreditsFromStorage();
+      
       d.log('✅ Wallet is ready');
       isWalletReady.set(true);
       const balance = userWallet?.balance;
@@ -495,6 +521,270 @@ export async function receiveToken(token: string) {
     dToken.error('❌ Failed to receive token:', error);
     throw error;
   }
+}
+
+// =============================================================================
+// PlebChat Credits Functions
+// =============================================================================
+
+const dCredits = d.extend('credits');
+
+/**
+ * Store a token as credits without redeeming (no mint interaction, no fee)
+ * These credits can be reused for future payments or redeemed later
+ */
+export async function storeAsCredits(token: string): Promise<{ amount: number }> {
+  dCredits.log(`Storing token as credits: ${token.substring(0, 20)}...`);
+  
+  try {
+    const decoded = getDecodedToken(token);
+    const proofs = decoded.proofs;
+    const mintUrl = decoded.mint;
+    const amount = proofs.reduce((sum: number, p: any) => sum + p.amount, 0);
+    
+    if (amount <= 0) {
+      throw new Error('Token has no value');
+    }
+    
+    const credit: PlebChatCredit = {
+      proofs,
+      mintUrl,
+      amount,
+      receivedAt: Date.now()
+    };
+    
+    // Add to store
+    plebchatCredits.update(credits => [...credits, credit]);
+    
+    // Persist to localStorage
+    saveCreditsToStorage();
+    
+    dCredits.log(`✅ Stored ${amount} sats as credits (mint: ${mintUrl})`);
+    return { amount };
+  } catch (error) {
+    dCredits.error('❌ Failed to store credits:', error);
+    throw error;
+  }
+}
+
+/**
+ * Load credits from localStorage on init
+ */
+export function loadCreditsFromStorage(): void {
+  try {
+    const stored = localStorage.getItem(CREDITS_STORAGE_KEY);
+    if (stored) {
+      const credits = JSON.parse(stored) as PlebChatCredit[];
+      plebchatCredits.set(credits);
+      const total = credits.reduce((sum, c) => sum + c.amount, 0);
+      dCredits.log(`Loaded ${credits.length} credit entries (${total} sats total) from storage`);
+    }
+  } catch (error) {
+    dCredits.error('Failed to load credits from storage:', error);
+  }
+}
+
+/**
+ * Save credits to localStorage
+ */
+function saveCreditsToStorage(): void {
+  try {
+    const credits = get(plebchatCredits);
+    localStorage.setItem(CREDITS_STORAGE_KEY, JSON.stringify(credits));
+    dCredits.log(`Saved ${credits.length} credit entries to storage`);
+  } catch (error) {
+    dCredits.error('Failed to save credits to storage:', error);
+  }
+}
+
+/**
+ * Get total credit balance for a specific mint (or all mints if not specified)
+ */
+export function getCreditBalance(mintUrl?: string): number {
+  const credits = get(plebchatCredits);
+  if (mintUrl) {
+    return credits
+      .filter(c => c.mintUrl === mintUrl)
+      .reduce((sum, c) => sum + c.amount, 0);
+  }
+  return credits.reduce((sum, c) => sum + c.amount, 0);
+}
+
+/**
+ * Generate a token from stored credits (no mint interaction needed)
+ * Returns the token and removes used credits from storage
+ */
+export async function generateTokenFromCredits(
+  amount: number, 
+  preferredMint?: string
+): Promise<{ token: string; amount: number } | null> {
+  const credits = get(plebchatCredits);
+  
+  if (credits.length === 0) {
+    dCredits.log('No credits available');
+    return null;
+  }
+  
+  // Filter by mint if specified
+  const availableCredits = preferredMint 
+    ? credits.filter(c => c.mintUrl === preferredMint)
+    : credits;
+  
+  const totalAvailable = availableCredits.reduce((sum, c) => sum + c.amount, 0);
+  
+  if (totalAvailable < amount) {
+    dCredits.log(`Insufficient credits: need ${amount}, have ${totalAvailable}`);
+    return null;
+  }
+  
+  // Collect proofs until we have enough
+  const proofsToUse: any[] = [];
+  const creditsToRemove: PlebChatCredit[] = [];
+  let collected = 0;
+  let mintUrl = '';
+  
+  for (const credit of availableCredits) {
+    if (collected >= amount) break;
+    
+    // All proofs must be from the same mint
+    if (!mintUrl) {
+      mintUrl = credit.mintUrl;
+    } else if (credit.mintUrl !== mintUrl) {
+      continue; // Skip different mints
+    }
+    
+    proofsToUse.push(...credit.proofs);
+    creditsToRemove.push(credit);
+    collected += credit.amount;
+  }
+  
+  if (collected < amount) {
+    dCredits.log(`Could not collect enough proofs from same mint`);
+    return null;
+  }
+  
+  try {
+    // Select exact proofs for the amount (greedy largest-first)
+    const sortedProofs = [...proofsToUse].sort((a, b) => b.amount - a.amount);
+    const selectedProofs: any[] = [];
+    let selectedAmount = 0;
+    
+    for (const proof of sortedProofs) {
+      if (selectedAmount >= amount) break;
+      selectedProofs.push(proof);
+      selectedAmount += proof.amount;
+    }
+    
+    // Serialize proofs to token (V4 format)
+    const token = getEncodedTokenV4({
+      mint: mintUrl,
+      proofs: selectedProofs
+    });
+    
+    // Calculate remaining proofs (change)
+    const usedSecrets = new Set(selectedProofs.map(p => p.secret));
+    const remainingProofs = proofsToUse.filter(p => !usedSecrets.has(p.secret));
+    const remainingAmount = remainingProofs.reduce((sum: number, p: any) => sum + p.amount, 0);
+    
+    // Update credits store
+    plebchatCredits.update(currentCredits => {
+      // Remove used credits
+      let updated = currentCredits.filter(c => !creditsToRemove.includes(c));
+      
+      // Add back remaining proofs as new credit if any
+      if (remainingProofs.length > 0 && remainingAmount > 0) {
+        updated.push({
+          proofs: remainingProofs,
+          mintUrl,
+          amount: remainingAmount,
+          receivedAt: Date.now()
+        });
+      }
+      
+      return updated;
+    });
+    
+    // Persist changes
+    saveCreditsToStorage();
+    
+    dCredits.log(`✅ Generated ${selectedAmount} sat token from credits (${remainingAmount} sats remaining)`);
+    return { token, amount: selectedAmount };
+  } catch (error) {
+    dCredits.error('Failed to generate token from credits:', error);
+    return null;
+  }
+}
+
+/**
+ * Redeem all credits to wallet (user explicitly cashes out, accepting fees)
+ */
+export async function redeemCredits(): Promise<{ amount: number; fee: number }> {
+  const credits = get(plebchatCredits);
+  
+  if (credits.length === 0) {
+    throw new Error('No credits to redeem');
+  }
+  
+  const currentWallet = get(wallet);
+  if (!currentWallet) {
+    throw new Error('Wallet not initialized');
+  }
+  
+  let totalRedeemed = 0;
+  let totalOriginal = 0;
+  const errors: string[] = [];
+  
+  for (const credit of credits) {
+    try {
+      // Serialize proofs back to token
+      const token = getEncodedTokenV4({
+        mint: credit.mintUrl,
+        proofs: credit.proofs
+      });
+      
+      totalOriginal += credit.amount;
+      
+      // Redeem via wallet (this will incur mint fee)
+      const result = await currentWallet.receiveToken(token, 'Credits redeemed');
+      if (result?.amount) {
+        totalRedeemed += result.amount;
+      }
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      errors.push(`Failed to redeem ${credit.amount} sats: ${msg}`);
+      dCredits.error(`Failed to redeem credit:`, error);
+    }
+  }
+  
+  // Clear all credits (even failed ones - they may be spent)
+  plebchatCredits.set([]);
+  saveCreditsToStorage();
+  
+  const fee = totalOriginal - totalRedeemed;
+  dCredits.log(`✅ Redeemed ${totalRedeemed} sats (fee: ${fee} sats)`);
+  
+  if (errors.length > 0) {
+    dCredits.error(`Some credits failed to redeem:`, errors);
+  }
+  
+  return { amount: totalRedeemed, fee };
+}
+
+/**
+ * Sweep all credits into the wallet (alias for redeemCredits)
+ * Converts unredeemed credits to wallet balance, incurring mint fees
+ */
+export async function sweepCreditsToWallet(): Promise<{ amount: number; fee: number }> {
+  return redeemCredits();
+}
+
+/**
+ * Clear all credits (e.g., on logout)
+ */
+export function clearCredits(): void {
+  plebchatCredits.set([]);
+  localStorage.removeItem(CREDITS_STORAGE_KEY);
+  dCredits.log('Credits cleared');
 }
 
 // Function to generate a token (create ecash to send)

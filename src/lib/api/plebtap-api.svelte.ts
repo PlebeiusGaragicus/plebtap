@@ -14,10 +14,19 @@ import {
   relayConnectionStatus,
   autoLogin
 } from '$lib/stores/nostr.js';
+
+// Wallet stores
+import { wallet, walletBalance, isWalletReady } from '$lib/stores/wallet.js';
+
+// PlebChat Credits stores and functions
 import { 
-  wallet, 
-  walletBalance, 
-  isWalletReady
+  plebchatCredits,
+  creditBalance,
+  storeAsCredits as storeCredits,
+  generateTokenFromCredits as genTokenFromCredits,
+  redeemCredits as redeemAllCredits,
+  sweepCreditsToWallet as sweepAllCredits,
+  getCreditBalance as getCredits
 } from '$lib/stores/wallet.js';
 import { get, derived } from 'svelte/store';
 
@@ -45,6 +54,7 @@ export class PlebtapAPI {
   #isLoggedIn = $state(false);
   #isReady = $state(false);
   #balance = $state(0);
+  #creditBalance = $state(0);
   #npub = $state<string | null>(null);
 
   constructor() {
@@ -59,6 +69,10 @@ export class PlebtapAPI {
 
     walletBalance.subscribe(value => {
       this.#balance = value;
+    });
+
+    creditBalance.subscribe(value => {
+      this.#creditBalance = value;
     });
 
     this._npub.subscribe(value => {
@@ -77,6 +91,15 @@ export class PlebtapAPI {
   
   get balance() { 
     return this.#balance;
+  }
+  
+  get creditBalance() {
+    return this.#creditBalance;
+  }
+  
+  /** Total available balance (wallet + credits) */
+  get totalBalance() {
+    return this.#balance + this.#creditBalance;
   }
   
   get npub() { 
@@ -170,6 +193,63 @@ export class PlebtapAPI {
       };
     } catch (error) {
       throw new Error(`Token receive failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // ==========================================================================
+  // PlebChat Credits - Store refund tokens without redemption to avoid fees
+  // ==========================================================================
+
+  /**
+   * Store a token as credits without redeeming (no mint interaction, no fee)
+   * Credits can be reused for future payments or redeemed later
+   */
+  async storeAsCredits(token: string): Promise<{ success: boolean; amount: number }> {
+    try {
+      const result = await storeCredits(token);
+      return { success: true, amount: result.amount };
+    } catch (error) {
+      throw new Error(`Failed to store credits: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Generate a payment token from stored credits (no wallet needed, no fees)
+   * Returns null if insufficient credits
+   */
+  async generateTokenFromCredits(amount: number, preferredMint?: string): Promise<{ token: string; amount: number } | null> {
+    return await genTokenFromCredits(amount, preferredMint);
+  }
+
+  /**
+   * Redeem all credits to wallet (user explicitly cashes out, accepting mint fees)
+   */
+  async redeemCredits(): Promise<{ success: boolean; amount: number; fee: number }> {
+    try {
+      const result = await redeemAllCredits();
+      return { success: true, amount: result.amount, fee: result.fee };
+    } catch (error) {
+      throw new Error(`Failed to redeem credits: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Get credit balance for a specific mint (or all mints if not specified)
+   */
+  getCreditBalanceForMint(mintUrl?: string): number {
+    return getCredits(mintUrl);
+  }
+
+  /**
+   * Sweep all credits into the wallet (converts to wallet balance, incurs mint fees)
+   * Alias for redeemCredits with a clearer name
+   */
+  async sweepCreditsToWallet(): Promise<{ success: boolean; amount: number; fee: number }> {
+    try {
+      const result = await sweepAllCredits();
+      return { success: true, amount: result.amount, fee: result.fee };
+    } catch (error) {
+      throw new Error(`Failed to sweep credits: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 

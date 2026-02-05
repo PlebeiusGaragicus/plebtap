@@ -1,8 +1,9 @@
 <!-- src/lib/components/plebtap/views/main-view.svelte -->
 <script lang="ts">
 	import { currentUser } from '$lib/stores/nostr.js';
-	import { isLoadingTransactions, walletTransactions } from '$lib/stores/wallet.js';
+	import { isLoadingTransactions, walletTransactions, creditBalance, sweepCreditsToWallet } from '$lib/stores/wallet.js';
 	import { navigateTo } from '$lib/stores/navigation.js';
+	import { toast } from 'svelte-sonner';
 
 	import Button from '$lib/components/ui/button/button.svelte';
 	import ViewContainer from './view-container.svelte';
@@ -16,8 +17,26 @@
 	import Copy from '@lucide/svelte/icons/copy';
 	import Settings from '@lucide/svelte/icons/settings';
 	import ScanQrCode from '@lucide/svelte/icons/scan-qr-code';
+	import Coins from '@lucide/svelte/icons/coins';
 
 	import { copyToClipboard } from '$lib/utils/clipboard.js';
+	
+	let isSweeping = $state(false);
+	
+	async function handleSweepCredits() {
+		isSweeping = true;
+		try {
+			const result = await sweepCreditsToWallet();
+			toast.success('Credits swept to wallet', {
+				description: `+${result.amount} sats added to wallet (${result.fee} sat fee)`
+			});
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : 'Unknown error';
+			toast.error('Sweep failed', { description: msg });
+		} finally {
+			isSweeping = false;
+		}
+	}
 </script>
 
 <ViewContainer>
@@ -60,6 +79,34 @@
 					<WalletBalance />
 				</div>
 			</div>
+			
+			<!-- PlebChat Credits Section - Shows when credits available -->
+			{#if $creditBalance > 0}
+				<div class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+					<div class="flex items-center justify-between">
+						<div class="flex items-center gap-2">
+							<Coins class="h-4 w-4 text-amber-500" />
+							<div>
+								<div class="text-sm font-medium">PlebChat Credits</div>
+								<div class="text-xs text-muted-foreground">
+									{$creditBalance} sats (no-fee payments)
+								</div>
+							</div>
+						</div>
+						<Button 
+							variant="outline" 
+							size="sm"
+							onclick={handleSweepCredits}
+							disabled={isSweeping}
+						>
+							{isSweeping ? 'Sweeping...' : 'Sweep to Wallet'}
+						</Button>
+					</div>
+					<div class="mt-2 text-xs text-muted-foreground">
+						Credits are used automatically for payments. Sweep to convert to wallet sats (1 sat fee).
+					</div>
+				</div>
+			{/if}
 
 			<!-- Single row with Receive, Scan, and Send buttons -->
 			<div class="flex items-center justify-center gap-2">
