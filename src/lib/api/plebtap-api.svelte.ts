@@ -22,6 +22,8 @@ import { wallet, walletBalance, isWalletReady } from '$lib/stores/wallet.js';
 import { 
   plebchatCredits,
   creditBalance,
+  creditHistory,
+  type CreditTransaction,
   storeAsCredits as storeCredits,
   generateTokenFromCredits as genTokenFromCredits,
   redeemCredits as redeemAllCredits,
@@ -55,6 +57,7 @@ export class PlebtapAPI {
   #isReady = $state(false);
   #balance = $state(0);
   #creditBalance = $state(0);
+  #creditHistory = $state<CreditTransaction[]>([]);
   #npub = $state<string | null>(null);
 
   constructor() {
@@ -73,6 +76,10 @@ export class PlebtapAPI {
 
     creditBalance.subscribe(value => {
       this.#creditBalance = value;
+    });
+
+    creditHistory.subscribe(value => {
+      this.#creditHistory = value;
     });
 
     this._npub.subscribe(value => {
@@ -95,6 +102,11 @@ export class PlebtapAPI {
   
   get creditBalance() {
     return this.#creditBalance;
+  }
+  
+  /** Credit transaction history (receives and sends) */
+  get creditTransactions(): CreditTransaction[] {
+    return this.#creditHistory;
   }
   
   /** Total available balance (wallet + credits) */

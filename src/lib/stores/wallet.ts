@@ -29,6 +29,7 @@ const debug = createDebug('wallet')
 const dTx = d.extend('tx');
 const dMint = d.extend('mint');
 const dToken = d.extend('token');
+const dCredits = d.extend('credits');
 
 // Wallet state
 export const wallet = writable<NDKCashuWallet | undefined>(undefined);
@@ -59,6 +60,78 @@ export const plebchatCredits = writable<PlebChatCredit[]>([]);
 export const creditBalance = derived(plebchatCredits, ($credits) => 
   $credits.reduce((sum, c) => sum + c.amount, 0)
 );
+
+// =============================================================================
+// Credit Transaction History - Track credit movements
+// =============================================================================
+
+const CREDIT_HISTORY_STORAGE_KEY = 'plebchat_credit_history';
+const MAX_HISTORY_ENTRIES = 50; // Keep last 50 transactions
+
+export type CreditTransactionType = 'receive' | 'send';
+
+export interface CreditTransaction {
+  id: string;           // Unique ID
+  type: CreditTransactionType;
+  amount: number;       // Amount in sats (always positive)
+  timestamp: number;    // Unix timestamp
+  description?: string; // Optional description (e.g., "Refund", "Payment")
+}
+
+// Store for credit transaction history
+export const creditHistory = writable<CreditTransaction[]>([]);
+
+/**
+ * Add a credit transaction to history
+ */
+export function addCreditTransaction(
+  type: CreditTransactionType, 
+  amount: number, 
+  description?: string
+): void {
+  const tx: CreditTransaction = {
+    id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+    type,
+    amount,
+    timestamp: Date.now(),
+    description
+  };
+  
+  creditHistory.update(history => {
+    const updated = [tx, ...history].slice(0, MAX_HISTORY_ENTRIES);
+    saveCreditHistoryToStorage(updated);
+    return updated;
+  });
+  
+  dCredits.log(`[History] ${type === 'receive' ? '+' : '-'}${amount} sats: ${description || 'No description'}`);
+}
+
+/**
+ * Load credit history from localStorage
+ */
+export function loadCreditHistoryFromStorage(): void {
+  try {
+    const stored = localStorage.getItem(CREDIT_HISTORY_STORAGE_KEY);
+    if (stored) {
+      const history = JSON.parse(stored) as CreditTransaction[];
+      creditHistory.set(history);
+      dCredits.log(`Loaded ${history.length} credit history entries from storage`);
+    }
+  } catch (error) {
+    dCredits.error('Failed to load credit history from storage:', error);
+  }
+}
+
+/**
+ * Save credit history to localStorage
+ */
+function saveCreditHistoryToStorage(history: CreditTransaction[]): void {
+  try {
+    localStorage.setItem(CREDIT_HISTORY_STORAGE_KEY, JSON.stringify(history));
+  } catch (error) {
+    dCredits.error('Failed to save credit history to storage:', error);
+  }
+}
 
 // Read from Vite env variable, fallback to production mint
 export const DEFAULT_MINTS = [
@@ -527,8 +600,6 @@ export async function receiveToken(token: string) {
 // PlebChat Credits Functions
 // =============================================================================
 
-const dCredits = d.extend('credits');
-
 /**
  * Store a token as credits without redeeming (no mint interaction, no fee)
  * These credits can be reused for future payments or redeemed later
@@ -559,6 +630,9 @@ export async function storeAsCredits(token: string): Promise<{ amount: number }>
     // Persist to localStorage
     saveCreditsToStorage();
     
+    // Log to transaction history
+    addCreditTransaction('receive', amount, 'Refund');
+    
     dCredits.log(`✅ Stored ${amount} sats as credits (mint: ${mintUrl})`);
     return { amount };
   } catch (error) {
@@ -582,6 +656,9 @@ export function loadCreditsFromStorage(): void {
   } catch (error) {
     dCredits.error('Failed to load credits from storage:', error);
   }
+  
+  // Also load credit history
+  loadCreditHistoryFromStorage();
 }
 
 /**
@@ -706,6 +783,9 @@ export async function generateTokenFromCredits(
     
     // Persist changes
     saveCreditsToStorage();
+    
+    // Log to transaction history
+    addCreditTransaction('send', selectedAmount, 'Payment');
     
     dCredits.log(`✅ Generated ${selectedAmount} sat token from credits (${remainingAmount} sats remaining)`);
     return { token, amount: selectedAmount };
