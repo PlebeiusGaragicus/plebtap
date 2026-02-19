@@ -28,30 +28,27 @@
 	import Input from '$lib/components/ui/input/input.svelte';
 	import LnQrCode from '../wallet/ln-qr-code.svelte';
 
-	// Common state
-	let activeTab = 'lightning';
-	let error: string | undefined;
+	let activeTab = $state('lightning');
+	let error = $state<string | undefined>();
 
-	// Lightning state
-	let amount = '100';
-	let isProcessing = false;
-	let isLoading = false;
-	let bolt11: string | undefined;
-	let isPaymentReceived = false;
+	let amount = $state('100');
+	let isProcessing = $state(false);
+	let isLoading = $state(false);
+	let bolt11 = $state<string | undefined>();
+	let isPaymentReceived = $state(false);
 
-	// Token state
-	let tokenInput = '';
-	let isReceivingToken = false;
-	let isTokenReceived = false;
-	let receivedAmount: number | undefined;
-	let isTokenDecoded = false;
-	let decodedToken: {
+	let tokenInput = $state('');
+	let isReceivingToken = $state(false);
+	let isTokenReceived = $state(false);
+	let receivedAmount = $state<number | undefined>();
+	let isTokenDecoded = $state(false);
+	let decodedToken = $state<{
 		mint: string;
 		amount: number;
 		memo?: string;
 		isTrustedMint: boolean;
-	} | null = null;
-	let isAddingMint = false;
+	} | null>(null);
+	let isAddingMint = $state(false);
 
 	// Clipboard state
 	let canPasteFromClipboard =
@@ -113,7 +110,7 @@
 			}
 
 			// Calculate total amount from proofs
-			const tokenAmount = decoded.proofs.reduce((sum, proof) => {
+			const tokenAmount = decoded.proofs.reduce((sum: number, proof: { amount: number }) => {
 				return sum + proof.amount;
 			}, 0);
 
@@ -251,11 +248,13 @@
 		decodedToken = null;
 	}
 
-	$: if (tokenInput) {
-		decodeToken(tokenInput);
-	} else {
-		clearDecodedInfo();
-	}
+	$effect(() => {
+		if (tokenInput) {
+			decodeToken(tokenInput);
+		} else {
+			clearDecodedInfo();
+		}
+	});
 
 	// Check for scanned token on mount
 	onMount(() => {
@@ -308,13 +307,14 @@
 					{#if !isProcessing}
 						<div class="grid gap-2">
 							<Label for="amount">Amount (sats)</Label>
-							<Input
-								id="amount"
-								type="number"
-								bind:value={amount}
-								min="1"
-								placeholder="Enter amount in sats"
-							/>
+						<Input
+							id="amount"
+							type="number"
+							bind:value={amount}
+							min="1"
+							placeholder="Enter amount in sats"
+							inputmode="numeric"
+						/>
 							<div class="flex flex-wrap gap-2">
 								{#each presetAmounts as preset}
 									<Button
@@ -335,16 +335,16 @@
 							</p>
 
 							{#if isPaymentReceived}
-								<div class="rounded-lg bg-green-50 p-4 text-center">
+								<div class="rounded-lg bg-green-50 dark:bg-green-950/30 p-4 text-center">
 									<CircleCheck class="mx-auto mb-2 h-10 w-10 text-green-500" />
-									<p class="font-medium text-green-700">Payment received!</p>
+									<p class="font-medium text-green-700 dark:text-green-300">Payment received!</p>
 								</div>
 							{:else}
 								<LnQrCode invoice={bolt11} />
 
 								<div class="mt-6 text-center">
 									<div
-										class="inline-flex items-center rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-800"
+										class="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-1 text-xs font-medium text-amber-800 dark:text-amber-200"
 									>
 										<LoaderCircle class="mr-1 h-3 w-3 animate-spin" />
 										Waiting for payment...
@@ -417,10 +417,10 @@
 											<div class="flex items-center gap-1">
 												{#if decodedToken.isTrustedMint}
 													<ShieldCheck class="h-4 w-4 text-green-500" />
-													<span class="text-green-600">Trusted</span>
+													<span class="text-green-600 dark:text-green-400">Trusted</span>
 												{:else}
 													<ShieldAlert class="h-4 w-4 text-amber-500" />
-													<span class="text-amber-600">Untrusted</span>
+													<span class="text-amber-600 dark:text-amber-400">Untrusted</span>
 												{/if}
 											</div>
 										</div>
@@ -466,11 +466,11 @@
 							{/if}
 						{/if}
 					{:else}
-						<div class="rounded-lg bg-green-50 p-4 text-center">
+						<div class="rounded-lg bg-green-50 dark:bg-green-950/30 p-4 text-center">
 							<CircleCheck class="mx-auto mb-2 h-10 w-10 text-green-500" />
-							<p class="font-medium text-green-700">Token received!</p>
+							<p class="font-medium text-green-700 dark:text-green-300">Token received!</p>
 							{#if receivedAmount !== undefined}
-								<p class="mt-1 text-green-600">
+								<p class="mt-1 text-green-600 dark:text-green-400">
 									{receivedAmount}
 									{receivedAmount === 1 ? 'sat' : 'sats'}
 								</p>

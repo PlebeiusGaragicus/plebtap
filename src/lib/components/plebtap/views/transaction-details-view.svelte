@@ -24,12 +24,12 @@
 	// Props for transaction details
 	let tx: NDKCashuWalletTx = $context.tx!;
 	let transaction = formatTransaction(tx);
-	let canReclaim = false;
-	let nanoId: string | undefined;
-	let isReclaiming = false;
-	let reclaimError: string | null = null;
-	let reclaimSuccess = false;
-	let shouldShowButton = true;
+	let canReclaim = $state(false);
+	let nanoId = $state<string | undefined>();
+	let isReclaiming = $state(false);
+	let reclaimError = $state<string | null>(null);
+	let reclaimSuccess = $state(false);
+	let shouldShowButton = $state(true);
 
 	// Check if this transaction can be reclaimed
 	async function checkReclaimStatus() {
@@ -78,8 +78,7 @@
 		}
 	}
 
-	// Get display-friendly description
-	$: displayDescription = formatTransactionDescription(transaction?.description || '');
+	let displayDescription = $derived(formatTransactionDescription(transaction?.description || ''));
 </script>
 
 <ViewContainer>
@@ -90,7 +89,7 @@
 			<div class="flex items-center justify-between">
 				<div class="flex items-center">
 					<div
-						class={`mr-3 flex h-10 w-10 items-center justify-center rounded-full ${transaction.direction === 'in' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}
+						class={`mr-3 flex h-10 w-10 items-center justify-center rounded-full ${transaction.direction === 'in' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}
 					>
 						{#if transaction.direction === 'in'}
 							<ArrowDownLeft class="h-5 w-5" />
@@ -104,7 +103,7 @@
 				</div>
 				<div class="text-right">
 					<p
-						class={`text-xl font-bold ${transaction.direction === 'in' ? 'text-green-600' : 'text-amber-600'}`}
+						class={`text-xl font-bold ${transaction.direction === 'in' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}
 					>
 						{transaction.direction === 'in' ? '+' : '-'}{transaction.amount} sats
 					</p>
@@ -172,8 +171,8 @@
 
 				<!-- Nutzap support -->
 				{#if transaction.hasNutzapRedemption}
-					<div class="mt-2 rounded-md bg-blue-50 p-2">
-						<p class="text-xs text-blue-700">This transaction redeemed Nutzaps (NIP-61)</p>
+					<div class="mt-2 rounded-md bg-blue-50 dark:bg-blue-950/30 p-2">
+						<p class="text-xs text-blue-700 dark:text-blue-300">This transaction redeemed Nutzaps (NIP-61)</p>
 					</div>
 				{/if}
 			</div>
@@ -195,16 +194,16 @@
 				{/if}
 
 				{#if reclaimSuccess}
-					<Alert class="mt-2 border-green-200 bg-green-50">
-						<AlertDescription class="text-green-700">
+					<Alert class="mt-2 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30">
+						<AlertDescription class="text-green-700 dark:text-green-300">
 							Token successfully reclaimed! Your balance has been updated.
 						</AlertDescription>
 					</Alert>
 				{/if}
 
 				{#if reclaimError}
-					<Alert class="mt-2 border-red-200 bg-red-50">
-						<AlertDescription class="text-red-700">
+					<Alert class="mt-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30">
+						<AlertDescription class="text-red-700 dark:text-red-300">
 							{#if reclaimError.includes('already been spent')}
 								This token has already been spent elsewhere and cannot be reclaimed.
 							{:else if reclaimError.includes('already been reclaimed')}

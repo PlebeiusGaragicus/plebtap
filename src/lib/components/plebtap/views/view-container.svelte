@@ -17,7 +17,7 @@
 </script>
 
 <div
-	class="h-full w-full"
+	class="absolute inset-0 h-full w-full"
 	in:fly={{ x: $direction * distance, duration }}
 	out:fly={{ x: $direction * -distance, duration }}
 >

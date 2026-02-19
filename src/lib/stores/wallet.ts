@@ -133,9 +133,8 @@ function saveCreditHistoryToStorage(history: CreditTransaction[]): void {
   }
 }
 
-// Read from Vite env variable, fallback to production mint
 export const DEFAULT_MINTS = [
-  import.meta.env.VITE_CASHU_MINT_URL || 'https://mint.cypherflow.ai'
+  'https://mint.cypherflow.ai'
 ];
 
 export const REQUIRED_DEPOSIT_AMOUNT = 1; // in sats

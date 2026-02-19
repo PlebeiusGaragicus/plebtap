@@ -23,10 +23,11 @@
 		canPerformSensitiveOperation,
 		getUnlockedKey,
 		hasMnemonicStored,
-		rotateWebAuthnCredential
+		rotateWebAuthnCredential,
+		unlockInsecure
 	} from '$lib/stores/security.svelte.js';
 	import type { PrivateKeyHex, PublicKeyHex } from '$lib/types/security.js';
-	import { privateKeyToNsec, privateKeyToPublicKey, publicKeyToNpub } from '$lib/services/crypto.js';
+	import { nsecToPrivateKey, privateKeyToNsec, privateKeyToPublicKey, publicKeyToNpub } from '$lib/services/crypto.js';
 
 	let showPrivateKey = $state(false);
 	let privateKey = $state('');
@@ -172,7 +173,6 @@
 	async function handleSetupAuth() {
 		// For insecure storage, we need to get the key from unlocked session
 		if (securityState.hasStoredKey && securityState.authMethod === 'none') {
-			const { unlockInsecure } = await import('$lib/stores/security.svelte.js');
 			const result = await unlockInsecure();
 			if (result.success && result.key) {
 				derivedPrivateKey = result.key.privateKeyHex;
@@ -188,7 +188,6 @@
 			if (key) {
 				try {
 					// The key from NDK is likely nsec or hex - convert to hex if needed
-					const { nsecToPrivateKey, privateKeyToPublicKey } = await import('$lib/services/crypto.js');
 					let hexKey: PrivateKeyHex;
 					
 					if (key.startsWith('nsec1')) {

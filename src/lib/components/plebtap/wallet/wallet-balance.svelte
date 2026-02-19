@@ -1,13 +1,17 @@
 <!-- src/lib/components/wallet/WalletBalance.svelte -->
 <script lang="ts">
 	import { walletBalance, isWalletReady, creditBalance } from '$lib/stores/wallet.js';
-    import LoaderCircle from '@lucide/svelte/icons/loader-circle'
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
 
-	export let compact = false;
-	export let showCredits = true;
-	
-	$: totalBalance = $walletBalance + $creditBalance;
-	$: hasCredits = $creditBalance > 0;
+	interface Props {
+		compact?: boolean;
+		showCredits?: boolean;
+	}
+
+	let { compact = false, showCredits = true }: Props = $props();
+
+	let totalBalance = $derived($walletBalance + $creditBalance);
+	let hasCredits = $derived($creditBalance > 0);
 </script>
 
 <div class={compact ? 'text-sm text-muted-foreground' : 'text-3xl font-bold'}>

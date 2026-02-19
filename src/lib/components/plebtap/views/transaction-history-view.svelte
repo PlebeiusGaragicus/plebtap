@@ -105,7 +105,7 @@
 						>
 							<div class="flex items-center">
 								<div
-									class={`mr-3 flex h-8 w-8 items-center justify-center rounded-full ${formattedTx.direction === 'in' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}
+									class={`mr-3 flex h-8 w-8 items-center justify-center rounded-full ${formattedTx.direction === 'in' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}
 								>
 									{#if formattedTx.direction === 'in'}
 										<ArrowDownLeft class="h-4 w-4" />
@@ -124,7 +124,7 @@
 							</div>
 							<div class="text-right">
 								<p
-									class={`font-semibold ${formattedTx.direction === 'in' ? 'text-green-600' : 'text-amber-600'}`}
+									class={`font-semibold ${formattedTx.direction === 'in' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}
 								>
 									{formattedTx.direction === 'in' ? '+' : '-'}{formattedTx.amount} sats
 								</p>

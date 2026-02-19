@@ -399,11 +399,12 @@
 							type="text"
 							bind:value={verificationInputs[i]}
 							placeholder={`Enter word #${wordIndex + 1}`}
-							class="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring md:text-sm"
+							class="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
 							autocomplete="off"
 							autocorrect="off"
 							autocapitalize="off"
 							spellcheck="false"
+							enterkeyhint="next"
 						/>
 					</div>
 				{/each}
@@ -449,8 +450,8 @@
 				<LoaderCircle class="h-12 w-12 animate-spin text-primary" />
 				<p class="text-sm font-medium">Complete security setup...</p>
 			{:else}
-				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-					<Check class="h-6 w-6 text-green-600" />
+				<div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+					<Check class="h-6 w-6 text-green-600 dark:text-green-400" />
 				</div>
 				<p class="text-sm font-medium">Account ready!</p>
 			{/if}

@@ -114,7 +114,7 @@
 	<ViewLayout title="Link from another device" backTo="login">
 		<!-- Error message display -->
 		{#if errorMessage}
-			<div class="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700" role="alert">
+			<div class="mb-4 rounded border border-red-400 dark:border-red-700 bg-red-100 dark:bg-red-900/30 px-4 py-3 text-red-700 dark:text-red-300" role="alert">
 				<span class="block sm:inline">{errorMessage}</span>
 			</div>
 		{/if}
@@ -147,7 +147,7 @@
 			<div class="flex flex-col items-center space-y-2 text-center">
 				<label for="pin" class="text-xs text-foreground">Enter PIN from primary device</label>
 
-				<InputOTP maxlength={4} bind:value={pin} pattern={REGEXP_ONLY_DIGITS}>
+				<InputOTP maxlength={4} bind:value={pin} pattern={REGEXP_ONLY_DIGITS} inputmode="numeric">
 					{#snippet children({ cells })}
 						<InputOTPGroup>
 							{#each cells as cell (cell)}

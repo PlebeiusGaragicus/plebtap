@@ -35,28 +35,23 @@
 	import QrCode from '@lucide/svelte/icons/qr-code';
 
 
-	// Common state
-	let activeTab = 'lightning';
-	let error: string | undefined;
-	// Lightning state
-	let lnInvoice = '';
-	let isSendingLn = false;
-	let isLnPaymentSent = false;
+	let activeTab = $state('lightning');
+	let error = $state<string | undefined>();
+	let lnInvoice = $state('');
+	let isSendingLn = $state(false);
+	let isLnPaymentSent = $state(false);
 
-	// Lightning fee reserve
-	const LIGHTNING_FEE_RESERVE = 3; // 3 sats minimum fee reserve
+	const LIGHTNING_FEE_RESERVE = 3;
 
-	// Decoded invoice info
-	let decodedAmount: number | undefined;
-	let decodedDescription: string | undefined;
-	let isExpired = false;
+	let decodedAmount = $state<number | undefined>();
+	let decodedDescription = $state<string | undefined>();
+	let isExpired = $state(false);
 
-	// Token state
-	let tokenAmount = '100';
-	let isGeneratingToken = false;
-	let isTokenGenerated = false;
-	let generatedToken: string | undefined;
-	let tokenMint: string | undefined;
+	let tokenAmount = $state('100');
+	let isGeneratingToken = $state(false);
+	let isTokenGenerated = $state(false);
+	let generatedToken = $state<string | undefined>();
+	let tokenMint = $state<string | undefined>();
 
 	// Clipboard state
 	let canPasteFromClipboard =
@@ -112,18 +107,16 @@
 		isExpired = false;
 	}
 
-	// Watch for changes to the invoice and decode it
-	$: if (lnInvoice) {
-		decodeInvoice();
-	} else {
-		clearDecodedInfo();
-	}
+	$effect(() => {
+		if (lnInvoice) {
+			decodeInvoice();
+		} else {
+			clearDecodedInfo();
+		}
+	});
 
-	// Calculate total amount needed (payment + fee reserve)
-	$: totalAmountNeeded = decodedAmount ? decodedAmount + LIGHTNING_FEE_RESERVE : 0;
-
-	// Check if we have enough balance for payment + fee reserve
-	$: hasEnoughBalanceForLn = totalAmountNeeded <= $walletBalance;
+	let totalAmountNeeded = $derived(decodedAmount ? decodedAmount + LIGHTNING_FEE_RESERVE : 0);
+	let hasEnoughBalanceForLn = $derived(totalAmountNeeded <= $walletBalance);
 
 	async function handleSendLightning() {
 		if (!$wallet || !lnInvoice) return;
@@ -371,7 +364,7 @@
 							<!-- Display warning if balance is insufficient for payment + fee -->
 							{#if decodedAmount && !hasEnoughBalanceForLn && !error}
 								<div
-									class="mb-2 flex items-center gap-2 rounded border bg-amber-50 p-2 text-amber-600"
+									class="mb-2 flex items-center gap-2 rounded border bg-amber-50 dark:bg-amber-950/30 p-2 text-amber-600 dark:text-amber-400"
 								>
 									<CircleAlert class="h-4 w-4 flex-shrink-0" />
 									<p class="text-xs">
@@ -400,16 +393,16 @@
 							</Button>
 						</div>
 					{:else}
-						<div class="rounded-lg bg-green-50 p-4 text-center">
+						<div class="rounded-lg bg-green-50 dark:bg-green-950/30 p-4 text-center">
 							<CircleCheck class="mx-auto mb-2 h-10 w-10 text-green-500" />
-							<p class="font-medium text-green-700">Payment sent successfully!</p>
+							<p class="font-medium text-green-700 dark:text-green-300">Payment sent successfully!</p>
 
 							{#if decodedAmount}
-								<p class="mt-2 text-green-600">{decodedAmount} sats</p>
+								<p class="mt-2 text-green-600 dark:text-green-400">{decodedAmount} sats</p>
 							{/if}
 
 							{#if decodedDescription}
-								<p class="mt-1 text-sm text-green-600">{decodedDescription}</p>
+								<p class="mt-1 text-sm text-green-600 dark:text-green-400">{decodedDescription}</p>
 							{/if}
 						</div>
 					{/if}
@@ -419,13 +412,14 @@
 					{#if !isTokenGenerated}
 						<div class="grid gap-2">
 							<Label for="tokenAmount">Amount (sats)</Label>
-							<Input
-								id="tokenAmount"
-								type="number"
-								bind:value={tokenAmount}
-								min="1"
-								placeholder="Enter amount in sats"
-							/>
+						<Input
+							id="tokenAmount"
+							type="number"
+							bind:value={tokenAmount}
+							min="1"
+							placeholder="Enter amount in sats"
+							inputmode="numeric"
+						/>
 
 							<div class="flex gap-2">
 								{#each presetAmounts as preset}

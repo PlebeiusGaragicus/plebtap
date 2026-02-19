@@ -1,7 +1,6 @@
 <!-- src/lib/components/plebtap/dialogs/unlock-dialog.svelte -->
 <!-- Unified unlock dialog: Shows PIN or WebAuthn based on configured auth method -->
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { InputOTP, InputOTPGroup, InputOTPSlot } from '$lib/components/ui/input-otp/index.js';
 	import { REGEXP_ONLY_DIGITS } from 'bits-ui';
 	import {
@@ -50,11 +49,6 @@
 	let lockoutSecondsRemaining = $state(0);
 	let lockoutIntervalId: ReturnType<typeof setInterval> | null = null;
 	let pinInputContainer: HTMLDivElement | null = $state(null);
-
-	const dispatch = createEventDispatcher<{
-		success: UnlockResult;
-		cancel: void;
-	}>();
 
 	// Determine what auth method to show
 	const authMethod = $derived(securityState.authMethod);
@@ -114,13 +108,12 @@
 			// Check rate limit status and show warning if there were previous failed attempts
 			checkRateLimitStatus(true);
 			
-			// Auto-trigger WebAuthn if that's the configured method
 			if (authMethod === 'webauthn') {
-				// Small delay to let dialog render
 				setTimeout(() => handleWebAuthn(), 100);
+			} else if (authMethod === 'pin') {
+				setTimeout(() => focusPinInput(), 150);
 			}
 			
-			// Auto-unlock for insecure storage
 			if (authMethod === 'none' && securityState.hasStoredKey) {
 				setTimeout(() => handleInsecureUnlock(), 100);
 			}
@@ -138,8 +131,6 @@
 			const result = await unlockInsecure();
 
 			if (result.success) {
-				dispatch('success', result);
-				// Wait for onSuccess to complete (login + wallet init)
 				await onSuccess?.(result);
 				open = false;
 			} else {
@@ -171,12 +162,9 @@
 			const result = await unlockWithPIN(pin);
 
 			if (result.success) {
-				dispatch('success', result);
-				// Wait for onSuccess to complete (login + wallet init)
 				await onSuccess?.(result);
 				open = false;
 			} else {
-				// Update rate limit status
 				await checkRateLimitStatus();
 				
 				if (isLockedOut) {
@@ -205,8 +193,6 @@
 			const result = await unlockWithWebAuthn();
 
 			if (result.success) {
-				dispatch('success', result);
-				// Wait for onSuccess to complete (login + wallet init)
 				await onSuccess?.(result);
 				open = false;
 			} else {
@@ -220,7 +206,6 @@
 	}
 
 	function handleCancel() {
-		dispatch('cancel');
 		onCancel?.();
 		open = false;
 	}
@@ -291,12 +276,13 @@
 							<p class="text-xs text-muted-foreground">Try again after the countdown</p>
 						</div>
 					{:else}
-						<InputOTP
-							maxlength={pinLength}
-							bind:value={pin}
-							pattern={REGEXP_ONLY_DIGITS}
-							disabled={isLoading}
-						>
+					<InputOTP
+						maxlength={pinLength}
+						bind:value={pin}
+						pattern={REGEXP_ONLY_DIGITS}
+						disabled={isLoading}
+						inputmode="numeric"
+					>
 							{#snippet children({ cells })}
 								<InputOTPGroup>
 									{#each cells as cell (cell)}

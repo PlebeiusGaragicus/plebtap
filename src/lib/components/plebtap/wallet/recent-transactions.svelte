@@ -6,18 +6,22 @@
 		isLoadingTransactions
 	} from '$lib/stores/wallet.js';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
-    import ArrowDownLeft from '@lucide/svelte/icons/arrow-down-left'
-    import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right'
-    import LoaderCircle from '@lucide/svelte/icons/loader-circle'
-    import ChevronRight from '@lucide/svelte/icons/chevron-right';
+	import ArrowDownLeft from '@lucide/svelte/icons/arrow-down-left';
+	import ArrowUpRight from '@lucide/svelte/icons/arrow-up-right';
+	import LoaderCircle from '@lucide/svelte/icons/loader-circle';
+	import ChevronRight from '@lucide/svelte/icons/chevron-right';
 
 	import { formatDistanceToNow } from 'date-fns';
 	import { navigateTo } from '$lib/stores/navigation.js';
 	import { formatTransactionDescription } from '$lib/utils/tx.js';
 	import Button from '$lib/components/ui/button/button.svelte';
-	// Props
-	export let limit: number = 3;
-	// Format the timestamp for display
+
+	interface Props {
+		limit?: number;
+	}
+
+	let { limit = 3 }: Props = $props();
+
 	function formatTime(timestamp: number): string {
 		if (!timestamp) return 'Unknown time';
 		try {
@@ -26,8 +30,8 @@
 			return 'Invalid time';
 		}
 	}
-	// Get recent transactions based on the limit
-	$: recentTransactions = $walletTransactions.slice(0, limit);
+
+	let recentTransactions = $derived($walletTransactions.slice(0, limit));
 </script>
 
 <div class="space-y-2">
@@ -61,7 +65,7 @@
 					>
 						<div class="flex items-center">
 							<div
-								class={`mr-2 flex h-6 w-6 items-center justify-center rounded-full ${formattedTx.direction === 'in' ? 'bg-green-100 text-green-600' : 'bg-amber-100 text-amber-600'}`}
+								class={`mr-2 flex h-6 w-6 items-center justify-center rounded-full ${formattedTx.direction === 'in' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'}`}
 							>
 								{#if formattedTx.direction === 'in'}
 									<ArrowDownLeft class="h-3 w-3" />
@@ -80,7 +84,7 @@
 						</div>
 						<div class="text-right">
 							<p
-								class={`text-xs font-medium ${formattedTx.direction === 'in' ? 'text-green-600' : 'text-amber-600'}`}
+								class={`text-xs font-medium ${formattedTx.direction === 'in' ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}
 							>
 								{formattedTx.direction === 'in' ? '+' : '-'}{formattedTx.amount} sats
 							</p>

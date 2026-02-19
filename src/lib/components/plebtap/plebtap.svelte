@@ -1,7 +1,6 @@
 <!-- src/lib/components/plebtap/plebtap.svelte -->
 <script lang="ts">
 	import {
-		initNavigation,
 		isUserMenuOpen,
 		openMenu,
 		navigateTo,
@@ -18,7 +17,8 @@
 	import { UnlockDialog } from './dialogs/index.js';
 	import { initWallet } from '$lib/stores/wallet.js';
 
-	const isDesktop = new MediaQuery('(min-width: 768px)').current;
+	const desktopQuery = new MediaQuery('(min-width: 768px)');
+	let isDesktop = $derived(desktopQuery.current);
 
 	// Unlock dialog state
 	let showUnlockDialog = $state(false);
@@ -34,7 +34,6 @@
 	// When popover opens, reset current view
 	$effect(() => {
 		if ($isUserMenuOpen) {
-			initNavigation();
 			openMenu();
 		}
 	});
@@ -54,9 +53,7 @@
 		if (result.key?.nsec) {
 			try {
 				await loginWithDecryptedKey(result.key.nsec);
-				// Initialize wallet after successful unlock
 				await initWallet();
-				// Navigate to main view after successful unlock
 				navigateTo('main');
 			} catch (error) {
 				autoLoginError = error instanceof Error ? error.message : 'Login failed';
@@ -65,7 +62,6 @@
 	}
 
 	function handleTriggerClick() {
-		// Show unlock dialog (only called when locked)
 		showUnlockDialog = true;
 	}
 </script>
@@ -73,17 +69,19 @@
 {#if isDesktop}
 	<div class="relative">
 		{#if locked}
-			<!-- When locked, just show the trigger with click handler for unlock dialog -->
-			<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-			<div onclick={handleTriggerClick} class="cursor-pointer">
+			<button
+				type="button"
+				onclick={handleTriggerClick}
+				class="cursor-pointer appearance-none border-0 bg-transparent p-0"
+			>
 				<PlebtapTrigger />
-			</div>
+			</button>
 		{:else}
 			<Popover bind:open={$isUserMenuOpen}>
 				<PopoverTrigger>
 					<PlebtapTrigger />
 				</PopoverTrigger>
-				<PopoverContent align="end" class="h-[420px] w-80 overflow-hidden p-0">
+				<PopoverContent align="end" class="h-[min(80vh,600px)] w-[360px] overflow-y-auto p-0">
 					<ViewRouter />
 				</PopoverContent>
 			</Popover>
@@ -91,25 +89,25 @@
 	</div>
 {:else}
 	{#if locked}
-		<!-- When locked, just show the trigger with click handler for unlock dialog -->
-		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-		<div onclick={handleTriggerClick} class="cursor-pointer">
+		<button
+			type="button"
+			onclick={handleTriggerClick}
+			class="cursor-pointer appearance-none border-0 bg-transparent p-0"
+		>
 			<PlebtapTrigger />
-		</div>
+		</button>
 	{:else}
-		<!-- Mobile: Bottom drawer with swipe-to-dismiss -->
 		<Drawer bind:open={$isUserMenuOpen}>
 			<DrawerTrigger>
 				<PlebtapTrigger />
 			</DrawerTrigger>
-			<DrawerContent class="h-[90vh]">
+			<DrawerContent class="h-[90dvh]">
 				<ViewRouter />
 			</DrawerContent>
 		</Drawer>
 	{/if}
 {/if}
 
-<!-- Unlock Dialog for locked wallet -->
 <UnlockDialog
 	bind:open={showUnlockDialog}
 	title="Unlock Wallet"

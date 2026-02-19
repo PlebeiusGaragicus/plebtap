@@ -1,7 +1,6 @@
 <!-- src/lib/components/plebtap/dialogs/auth-setup-dialog.svelte -->
 <!-- Authentication setup dialog: User chooses PIN OR WebAuthn, or skips security -->
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
 	import { InputOTP, InputOTPGroup, InputOTPSlot } from '$lib/components/ui/input-otp/index.js';
 	import { REGEXP_ONLY_DIGITS } from 'bits-ui';
 	import {
@@ -50,10 +49,6 @@
 	let confirmPin = $state('');
 	let isLoading = $state(false);
 	let errorMessage = $state('');
-
-	const dispatch = createEventDispatcher<{
-		complete: { method: 'pin' | 'webauthn' | 'insecure' };
-	}>();
 
 	// Reset state when dialog opens
 	$effect(() => {
@@ -121,7 +116,6 @@
 
 			// Auto-close after showing success
 			setTimeout(() => {
-				dispatch('complete', { method: 'pin' });
 				onComplete?.();
 				open = false;
 			}, 1500);
@@ -147,9 +141,7 @@
 
 			step = 'complete';
 
-			// Auto-close after showing success
 			setTimeout(() => {
-				dispatch('complete', { method: 'webauthn' });
 				onComplete?.();
 				open = false;
 			}, 1500);
@@ -175,9 +167,7 @@
 
 			step = 'complete';
 
-			// Auto-close after showing success
 			setTimeout(() => {
-				dispatch('complete', { method: 'insecure' });
 				onComplete?.();
 				open = false;
 			}, 1500);
@@ -323,6 +313,7 @@
 						bind:value={pin}
 						pattern={REGEXP_ONLY_DIGITS}
 						disabled={isLoading}
+						inputmode="numeric"
 					>
 						{#snippet children({ cells })}
 							<InputOTPGroup>
@@ -350,6 +341,7 @@
 						bind:value={confirmPin}
 						pattern={REGEXP_ONLY_DIGITS}
 						disabled={isLoading}
+						inputmode="numeric"
 					>
 						{#snippet children({ cells })}
 							<InputOTPGroup>

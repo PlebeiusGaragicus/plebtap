@@ -1,19 +1,22 @@
 <!-- src/lib/components/qr-codes/qr-scanner.svelte -->
 <script lang="ts">
-	import { onMount, onDestroy, createEventDispatcher } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import QrScanner from 'qr-scanner';
 	import { toast } from 'svelte-sonner';
 
-	// For UR decoder (required for animated QR codes)
+	interface Props {
+		onscanned?: (data: string) => void;
+	}
+
+	let { onscanned }: Props = $props();
+
 	let URDecoder: any;
 	let urDecoder: any;
-	let urDecoderProgress: number = 0;
-
-	const dispatch = createEventDispatcher();
+	let urDecoderProgress: number = $state(0);
 
 	let videoElement: HTMLVideoElement;
 	let qrScanner: QrScanner | null = null;
-	let hasCamera = true;
+	let hasCamera = $state(true);
 
 	onMount(async () => {
 		try {
@@ -76,8 +79,7 @@
 						decoded = ur.toString();
 					}
 
-					// For ecash tokens, we need the decoded string
-					dispatch('scanned', decoded);
+					onscanned?.(decoded);
 
 					// Stop scanning after a successful scan
 					pauseScanner();
@@ -102,8 +104,7 @@
 				tokenData = data.substring(10);
 			}
 
-			// Normal QR code, dispatch the result directly
-			dispatch('scanned', tokenData);
+			onscanned?.(tokenData);
 
 			// Stop scanning after a successful scan
 			pauseScanner();
