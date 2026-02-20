@@ -31,11 +31,14 @@
 		!securityState.isUnlocked
 	);
 
-	// When popover opens, reset current view
+	// Reset view only on the closed → open transition, not on mount or re-renders
+	let prevMenuOpen = false;
 	$effect(() => {
-		if ($isUserMenuOpen) {
+		const isOpen = $isUserMenuOpen;
+		if (isOpen && !prevMenuOpen) {
 			openMenu();
 		}
+		prevMenuOpen = isOpen;
 	});
 
 	// Try auto login

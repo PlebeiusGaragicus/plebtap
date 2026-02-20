@@ -134,7 +134,7 @@ function saveCreditHistoryToStorage(history: CreditTransaction[]): void {
 }
 
 export const DEFAULT_MINTS = [
-  'https://mint.cypherflow.ai'
+  import.meta.env.VITE_CASHU_MINT_URL || 'https://mint.cypherflow.ai'
 ];
 
 export const REQUIRED_DEPOSIT_AMOUNT = 1; // in sats
